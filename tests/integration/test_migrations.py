@@ -22,6 +22,9 @@ def test_migrations_upgrade_and_downgrade(require_integration_database: str) -> 
     try:
         inspector = inspect(upgraded_engine)
         assert "audit_events" in inspector.get_table_names()
+        assert "skills" in inspector.get_table_names()
+        assert "skill_versions" in inspector.get_table_names()
+        assert "skill_version_checksums" in inspector.get_table_names()
     finally:
         upgraded_engine.dispose()
 
@@ -31,5 +34,8 @@ def test_migrations_upgrade_and_downgrade(require_integration_database: str) -> 
     try:
         inspector = inspect(downgraded_engine)
         assert "audit_events" not in inspector.get_table_names()
+        assert "skills" not in inspector.get_table_names()
+        assert "skill_versions" not in inspector.get_table_names()
+        assert "skill_version_checksums" not in inspector.get_table_names()
     finally:
         downgraded_engine.dispose()

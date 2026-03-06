@@ -37,6 +37,7 @@ htmlcov/
 # FastAPI / runtime
 *.log
 *.pid
+.data/
 
 # IDEs
 .idea/

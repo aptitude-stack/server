@@ -14,6 +14,7 @@ Provide discoverability and deterministic ranking using structured metadata sign
 - Build indexing and query path for metadata-driven filtering.
 - Add search endpoint with deterministic sorting.
 - Return ranking explanation fields.
+- Keep optional RAG retrieval signals out of this milestone (deferred follow-up plan).
 
 ## Architecture Impact
 - Expands intelligence layer (metadata engine and indexing).

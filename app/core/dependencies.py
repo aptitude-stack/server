@@ -8,6 +8,7 @@ from fastapi import Depends, Request
 
 from app.core.readiness import ReadinessService
 from app.core.settings import Settings, get_settings
+from app.core.skill_registry import SkillRegistryService
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
@@ -21,3 +22,14 @@ def get_readiness_service(request: Request) -> ReadinessService:
 
 
 ReadinessServiceDep = Annotated[ReadinessService, Depends(get_readiness_service)]
+
+
+def get_skill_registry_service(request: Request) -> SkillRegistryService:
+    """Return the process-scoped immutable skill registry service."""
+    service = getattr(request.app.state, "skill_registry_service", None)
+    if not isinstance(service, SkillRegistryService):
+        raise RuntimeError("Skill registry service is not initialized.")
+    return service
+
+
+SkillRegistryServiceDep = Annotated[SkillRegistryService, Depends(get_skill_registry_service)]

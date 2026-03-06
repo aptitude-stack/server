@@ -61,6 +61,13 @@ def get_session() -> Iterator[Session]:
         session.close()
 
 
+def get_session_factory() -> sessionmaker[Session]:
+    """Return initialized process session factory."""
+    if _SESSION_FACTORY is None:
+        raise RuntimeError("Database engine is not initialized.")
+    return _SESSION_FACTORY
+
+
 class SQLAlchemyDatabaseReadinessProbe(DatabaseReadinessPort):
     """Persistence adapter for database readiness checks."""
 

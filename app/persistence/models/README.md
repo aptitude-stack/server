@@ -1,0 +1,21 @@
+# app.persistence.models module
+
+SQLAlchemy ORM models mapped to repository tables.
+
+## Purpose
+
+Defines relational schema mappings used by persistence adapters and Alembic
+migrations.
+
+## Key Files
+
+- `base.py`: declarative base class.
+- `skill.py`: logical skill root table (`skills`).
+- `skill_version.py`: immutable version metadata (`skill_versions`).
+- `skill_version_checksum.py`: checksum metadata (`skill_version_checksums`).
+- `audit_event.py`: audit event table (`audit_events`).
+- `__init__.py`: package exports.
+
+## Notes
+
+Keep model docs aligned with Alembic migrations and repository adapter behavior.

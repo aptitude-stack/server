@@ -1,7 +1,7 @@
 # Plan 04 — Repository API Contract V1
 
 ## Goal
-Stabilize public API contracts and validation behavior to keep consumers insulated from internal refactors.
+Stabilize public API contracts and validation behavior to keep consumers insulated from internal refactors and aligned to the repository/resolver boundary.
 
 ## Stack Alignment
 - API framework: FastAPI (OpenAPI-first contract generation)
@@ -14,6 +14,7 @@ Stabilize public API contracts and validation behavior to keep consumers insulat
 - Add DTO layer separate from core domain models.
 - Standardize error envelope and error codes.
 - Enforce request/response validation rules.
+- Lock repository-facing contract required by `docs/scope.md`: publish, fetch, resolve, bundle download, report retrieval.
 
 ## Architecture Impact
 - Hardens repository interface layer as stable contract boundary.
@@ -21,6 +22,12 @@ Stabilize public API contracts and validation behavior to keep consumers insulat
 
 ## Deliverables
 - OpenAPI spec covering all current v1 endpoints.
+- OpenAPI coverage for:
+  - `POST /skills/publish`
+  - `GET /skills/{id}/{version}`
+  - `POST /resolve`
+  - `GET /bundles/{bundle_id}`
+  - `GET /reports/{resolution_id}`
 - Unified error response shape and status mapping.
 - Validation middleware for payload and query constraints.
 - Contract tests generated from spec examples.
@@ -30,6 +37,7 @@ Stabilize public API contracts and validation behavior to keep consumers insulat
 - API behavior matches OpenAPI examples.
 - Invalid payloads fail with consistent error format.
 - Existing endpoints keep backward-compatible response fields.
+- No contract drift against required repository endpoints.
 
 ## Test Plan
 - Contract tests for request and response examples.

@@ -15,11 +15,7 @@ FORBIDDEN_IMPORT_RULES = (
 
 
 def _iter_python_files(root: Path) -> list[Path]:
-    return [
-        path
-        for path in root.rglob("*.py")
-        if "__pycache__" not in path.parts
-    ]
+    return [path for path in root.rglob("*.py") if "__pycache__" not in path.parts]
 
 
 def _iter_imports(path: Path) -> list[tuple[int, str]]:

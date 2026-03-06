@@ -1,0 +1,4 @@
+interface:
+  display_name: "Changelog Writer"
+  short_description: "Draft concise architecture changelogs"
+  default_prompt: "Use $changelog-writer to draft a concise milestone changelog with Mermaid diagrams, schema tables, and code links."

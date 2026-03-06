@@ -32,9 +32,13 @@ Harden the system for reliable operation, auditing, and repeatable deployment.
 - CI blocks merges on failing quality gates.
 - Containerized service starts and runs migrations on startup path.
 - Resolution debugging is reproducible from `ResolutionReport` and audit records.
+- 100% of publish/deprecate/archive/resolve actions emit auditable events.
+- Publish pipeline success SLO instrumentation is present with monthly target >= 99.5%.
+- Resolve latency SLO instrumentation is present for p95 <= 250 ms at target graph size.
 
 ## Test Plan
 - End-to-end integration test for publish -> resolve -> evaluate -> resolve.
 - `pytest` suite in CI with coverage and deterministic integration checks.
 - Smoke test in containerized environment.
 - Audit completeness test against the event matrix.
+- Performance and load test that validates p95 resolve latency target under representative bundle complexity.
