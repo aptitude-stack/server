@@ -17,6 +17,7 @@ def test_settings_load_valid_environment(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("LOG_LEVEL", "DEBUG")
     monkeypatch.setenv("APP_NAME", "aptitude-test")
+    monkeypatch.setenv("ARTIFACT_ROOT_DIR", "/tmp/aptitude-artifacts")
 
     settings = Settings(_env_file=None)
 
@@ -24,6 +25,7 @@ def test_settings_load_valid_environment(monkeypatch: pytest.MonkeyPatch) -> Non
     assert settings.app_env == "test"
     assert settings.log_level == "DEBUG"
     assert settings.app_name == "aptitude-test"
+    assert settings.artifact_root_dir == "/tmp/aptitude-artifacts"
 
 
 @pytest.mark.unit

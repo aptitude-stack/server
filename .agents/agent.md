@@ -5,11 +5,13 @@ Aptitude is a Go-based, execution-agnostic repository for immutable skills with 
 
 ## Source and Instruction Files
 1. Product and architecture intent: [`docs/overview.md`](../docs/overview.md)
-2. Repo operating rules: [`rules/repo.md`](rules/repo.md)
-3. Roadmap and sequencing: [`plans/roadmap.md`](plans/roadmap.md)
-4. Plan execution files: `plans/XX-*.md` (append-only milestones)
-5. Stable repo facts: [`memory/meta.md`](memory/meta.md)
-6. Skills for TDD and pyhton + FastAPI back-end + Postgres best practices: [`skills`](skills/)
+2. Repository/Resolver boundary contract: [`docs/scope.md`](../docs/scope.md)
+3. Repository product requirements: [`docs/repository-prd.md`](../docs/repository-prd.md)
+4. Repo operating rules: [`rules/repo.md`](rules/repo.md)
+5. Roadmap and sequencing: [`plans/roadmap.md`](plans/roadmap.md)
+6. Plan execution files: `plans/XX-*.md` (append-only milestones)
+7. Stable repo facts: [`memory/meta.md`](memory/meta.md)
+8. Skills for TDD and pyhton + FastAPI back-end + Postgres best practices: [`skills`](skills/)
 
 If rules conflict, follow the highest item unless the repository includes a newer explicit architecture decision.
 
@@ -31,3 +33,9 @@ If rules conflict, follow the highest item unless the repository includes a newe
   - `app/core/**` must not import persistence modules directly.
   - Persistence must be injected via core-defined ports/interfaces.
   - `app/main.py` is the composition root allowed to wire core to persistence.
+
+## Module README Discipline
+- Every module directory under `app/` must contain a `README.md`.
+- If code changes in a module, update that module README in the same change.
+- If a module is added, renamed, or removed, add/update/remove the corresponding README.
+- Keep `app/README.md` updated as the index of module responsibilities.

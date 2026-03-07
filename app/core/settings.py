@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     app_env: str = Field(default="dev", alias="APP_ENV")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     app_name: str = Field(default="aptitude", alias="APP_NAME")
+    artifact_root_dir: str = Field(default="./.data/artifacts", alias="ARTIFACT_ROOT_DIR")
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -38,11 +38,11 @@ flowchart TB
 ```
 
 Why this shape:
-- Interface remains thin, so HTTP concerns do not absorb domain logic.
-- Core owns process-level cross-cutting concerns (config, logging, DI), making startup and runtime behavior consistent.
-- Persistence is centralized for connection lifecycle and infrastructure adapters.
-- Composition root wiring in `app/main.py` keeps dependency direction strict while still allowing runtime assembly.
-- Placeholders for `audit` and `intelligence` make future boundaries explicit now, reducing refactor cost later.
+- Interface remains thin, so HTTP concerns do not absorb domain logic ([health router](/Users/yonatan/Dev/Aptitude/app/interface/api/health.py)).
+- Core owns process-level cross-cutting concerns (config, logging, DI), making startup and runtime behavior consistent ([settings](/Users/yonatan/Dev/Aptitude/app/core/settings.py), [dependencies](/Users/yonatan/Dev/Aptitude/app/core/dependencies.py), [readiness service](/Users/yonatan/Dev/Aptitude/app/core/readiness.py)).
+- Persistence is centralized for connection lifecycle and infrastructure adapters ([DB lifecycle](/Users/yonatan/Dev/Aptitude/app/persistence/db.py)).
+- Composition root wiring in `app/main.py` keeps dependency direction strict while still allowing runtime assembly ([app/main.py](/Users/yonatan/Dev/Aptitude/app/main.py)).
+- Placeholders for `audit` and `intelligence` make future boundaries explicit now, reducing refactor cost later ([audit package](/Users/yonatan/Dev/Aptitude/app/audit/__init__.py), [intelligence package](/Users/yonatan/Dev/Aptitude/app/intelligence/__init__.py)).
 
 ## 3) Request lifecycle and operational semantics
 
@@ -76,45 +76,54 @@ sequenceDiagram
 ```
 
 Why two endpoints:
-- `/healthz` answers “is process alive?” and should be cheap/stable.
-- `/readyz` answers “can this instance serve real traffic?” and includes dependency checks.
-- This separation supports safer deployments, restarts, and traffic routing.
+- `/healthz` answers “is process alive?” and should be cheap/stable ([endpoint](/Users/yonatan/Dev/Aptitude/app/interface/api/health.py)).
+- `/readyz` answers “can this instance serve real traffic?” and includes dependency checks ([endpoint](/Users/yonatan/Dev/Aptitude/app/interface/api/health.py), [core readiness](/Users/yonatan/Dev/Aptitude/app/core/readiness.py), [DB probe](/Users/yonatan/Dev/Aptitude/app/persistence/db.py)).
+- This separation supports safer deployments, restarts, and traffic routing ([integration coverage](/Users/yonatan/Dev/Aptitude/tests/integration/test_health_endpoints.py)).
 
 ## 4) Why each major decision was taken
 
 ### 4.1 App factory + lifespan
-- `create_app()` enables deterministic app construction in tests and runtime.
-- Lifespan startup/shutdown centralizes resource management (engine init/dispose), reducing hidden side effects.
+- `create_app()` enables deterministic app construction in tests and runtime ([app factory](/Users/yonatan/Dev/Aptitude/app/main.py), [health integration tests](/Users/yonatan/Dev/Aptitude/tests/integration/test_health_endpoints.py)).
+- Lifespan startup/shutdown centralizes resource management (engine init/dispose), reducing hidden side effects ([lifespan wiring](/Users/yonatan/Dev/Aptitude/app/main.py), [engine lifecycle](/Users/yonatan/Dev/Aptitude/app/persistence/db.py)).
 
 ### 4.2 Typed settings (`pydantic-settings`)
-- Required `DATABASE_URL` enforces fail-fast startup for critical infrastructure.
-- Defaults (`APP_ENV`, `LOG_LEVEL`, `APP_NAME`) keep local setup simple but explicit.
-- Typed config reduces “stringly typed” runtime errors and improves testability.
+- Required `DATABASE_URL` enforces fail-fast startup for critical infrastructure ([settings model](/Users/yonatan/Dev/Aptitude/app/core/settings.py), [unit test](/Users/yonatan/Dev/Aptitude/tests/unit/test_settings.py)).
+- Defaults (`APP_ENV`, `LOG_LEVEL`, `APP_NAME`) keep local setup simple but explicit ([settings model](/Users/yonatan/Dev/Aptitude/app/core/settings.py)).
+- Typed config reduces “stringly typed” runtime errors and improves testability ([settings model](/Users/yonatan/Dev/Aptitude/app/core/settings.py), [unit test](/Users/yonatan/Dev/Aptitude/tests/unit/test_settings.py)).
 
 ### 4.3 SQLAlchemy 2.0 + Alembic
 - Chosen to align with roadmap and milestone contract.
-- Engine/session lifecycle in one module prevents inconsistent DB handling across handlers.
-- Versioned migrations make schema state reproducible and auditable.
+- Engine/session lifecycle in one module prevents inconsistent DB handling across handlers ([DB module](/Users/yonatan/Dev/Aptitude/app/persistence/db.py)).
+- Versioned migrations make schema state reproducible and auditable ([alembic env](/Users/yonatan/Dev/Aptitude/alembic/env.py), [baseline migration](/Users/yonatan/Dev/Aptitude/alembic/versions/0001_baseline_audit_event.py), [migration integration test](/Users/yonatan/Dev/Aptitude/tests/integration/test_migrations.py)).
 
 ### 4.4 Layered readiness refactor (strict boundaries)
-- Introduced core port `DatabaseReadinessPort` and core `ReadinessService`.
-- Replaced direct route-level persistence access with interface -> core dependency.
-- Implemented persistence adapter `SQLAlchemyDatabaseReadinessProbe` and wired it only in `app/main.py`.
-- Added architecture tests to fail on `interface -> persistence` and `core -> persistence` imports.
+- Introduced core port `DatabaseReadinessPort` and core `ReadinessService` ([port](/Users/yonatan/Dev/Aptitude/app/core/ports.py), [service](/Users/yonatan/Dev/Aptitude/app/core/readiness.py)).
+- Replaced direct route-level persistence access with interface -> core dependency ([health API deps](/Users/yonatan/Dev/Aptitude/app/interface/api/health.py), [dependency providers](/Users/yonatan/Dev/Aptitude/app/core/dependencies.py)).
+- Implemented persistence adapter `SQLAlchemyDatabaseReadinessProbe` and wired it only in `app/main.py` ([probe adapter](/Users/yonatan/Dev/Aptitude/app/persistence/db.py), [composition root](/Users/yonatan/Dev/Aptitude/app/main.py)).
+- Added architecture tests to fail on `interface -> persistence` and `core -> persistence` imports ([layering test](/Users/yonatan/Dev/Aptitude/tests/unit/test_layering_imports.py)).
 
 ### 4.5 Baseline `audit_events` table
-- Minimal schema to validate migration mechanics without introducing domain complexity.
-- Gives a concrete target for upgrade/downgrade testing.
+- Minimal schema to validate migration mechanics without introducing domain complexity ([migration](/Users/yonatan/Dev/Aptitude/alembic/versions/0001_baseline_audit_event.py), [ORM model](/Users/yonatan/Dev/Aptitude/app/persistence/models/audit_event.py)).
+- Gives a concrete target for upgrade/downgrade testing ([migration integration test](/Users/yonatan/Dev/Aptitude/tests/integration/test_migrations.py)).
+
+Schema reference for [0001_baseline_audit_event.py](/Users/yonatan/Dev/Aptitude/alembic/versions/0001_baseline_audit_event.py):
+
+| Field | Type | Nullable | Default / Constraint | Role |
+| --- | --- | --- | --- | --- |
+| `id` | `Integer` | No | Primary key, autoincrement | Stable identifier for each audit row. |
+| `event_type` | `String(100)` | No | Required | Event category name for auditable actions. |
+| `payload` | `JSON` | Yes | Optional | Structured event metadata payload. |
+| `created_at` | `DateTime(timezone=True)` | No | `CURRENT_TIMESTAMP` | Event creation timestamp. |
 
 ### 4.6 Test split (unit + integration)
-- Unit tests cover strict configuration behavior quickly.
-- Integration tests validate behavior at service and migration boundaries.
-- DB-dependent tests skip cleanly when Postgres is unavailable, preserving local dev flow.
+- Unit tests cover strict configuration behavior quickly ([settings unit tests](/Users/yonatan/Dev/Aptitude/tests/unit/test_settings.py), [readiness unit tests](/Users/yonatan/Dev/Aptitude/tests/unit/test_readiness_service.py)).
+- Integration tests validate behavior at service and migration boundaries ([health integration tests](/Users/yonatan/Dev/Aptitude/tests/integration/test_health_endpoints.py), [migration integration tests](/Users/yonatan/Dev/Aptitude/tests/integration/test_migrations.py)).
+- DB-dependent tests skip cleanly when Postgres is unavailable, preserving local dev flow ([integration fixture](/Users/yonatan/Dev/Aptitude/tests/conftest.py)).
 
 ### 4.7 Tooling and quality gates
-- `Makefile` provides one-command workflows and keeps execution habits consistent.
-- `ruff` + `mypy` enforce readability and type contracts before future complexity arrives.
-- `UV_CACHE_DIR=.uv-cache` avoids environment-specific cache permission issues.
+- `Makefile` provides one-command workflows and keeps execution habits consistent ([Makefile](/Users/yonatan/Dev/Aptitude/Makefile)).
+- `ruff` + `mypy` enforce readability and type contracts before future complexity arrives ([tool config](/Users/yonatan/Dev/Aptitude/pyproject.toml)).
+- `UV_CACHE_DIR=.uv-cache` avoids environment-specific cache permission issues ([Makefile](/Users/yonatan/Dev/Aptitude/Makefile)).
 
 ## 5) Layer boundaries (future-safe rules)
 
@@ -133,10 +142,10 @@ flowchart LR
 ```
 
 Rules to preserve:
-- `interface` depends only on core-facing modules.
-- `core` depends on persistence only through core-defined ports/interfaces.
-- `app/main.py` is the composition root allowed to wire core and persistence.
-- `persistence` must never import API/router code.
+- `interface` depends only on core-facing modules ([interface package](/Users/yonatan/Dev/Aptitude/app/interface/__init__.py), [layering test](/Users/yonatan/Dev/Aptitude/tests/unit/test_layering_imports.py)).
+- `core` depends on persistence only through core-defined ports/interfaces ([core ports](/Users/yonatan/Dev/Aptitude/app/core/ports.py), [layering test](/Users/yonatan/Dev/Aptitude/tests/unit/test_layering_imports.py)).
+- `app/main.py` is the composition root allowed to wire core and persistence ([composition root](/Users/yonatan/Dev/Aptitude/app/main.py)).
+- `persistence` must never import API/router code ([persistence package](/Users/yonatan/Dev/Aptitude/app/persistence/__init__.py), [layering test](/Users/yonatan/Dev/Aptitude/tests/unit/test_layering_imports.py)).
 - Keep future policy/resolution logic out of route handlers; place it in dedicated core modules.
 
 ## 6) Tradeoffs and known limitations

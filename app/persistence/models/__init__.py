@@ -2,5 +2,8 @@
 
 from app.persistence.models.audit_event import AuditEvent
 from app.persistence.models.base import Base
+from app.persistence.models.skill import Skill
+from app.persistence.models.skill_version import SkillVersion
+from app.persistence.models.skill_version_checksum import SkillVersionChecksum
 
-__all__ = ["AuditEvent", "Base"]
+__all__ = ["AuditEvent", "Base", "Skill", "SkillVersion", "SkillVersionChecksum"]

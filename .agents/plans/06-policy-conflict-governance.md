@@ -14,6 +14,7 @@ Enforce centralized governance for conflicts, overlaps, trust tiers, and lifecyc
 - Add policy profiles controlling resolution behavior.
 - Implement trust-tier gating.
 - Implement lifecycle transitions (`published`, `deprecated`, `archived`).
+- Keep policy authority in repository; resolver may only apply additive downstream gates outside this scope.
 
 ## Architecture Impact
 - Strengthens policy engine in core domain.

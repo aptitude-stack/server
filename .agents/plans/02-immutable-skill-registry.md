@@ -1,7 +1,7 @@
 # Plan 02 — Immutable Skill Registry
 
 ## Goal
-Support publish and fetch of `skill@version` with strict immutability and integrity verification.
+Support publish and fetch of `skill@version` with strict immutability and integrity verification as the repository source of truth.
 
 ## Stack Alignment
 - Runtime: Python 3.12+
@@ -15,15 +15,17 @@ Support publish and fetch of `skill@version` with strict immutability and integr
 - Store artifact files in immutable path layout.
 - Compute and store checksums.
 - Expose publish/fetch/list endpoints.
+- Keep all writes API-mediated; no direct client writes to repository persistence.
+- Exclude runtime prompt orchestration and plugin execution (resolver scope).
 
 ## Architecture Impact
 - Implements core asset registry responsibilities.
 - Connects interface, persistence, and audit layers for skill lifecycle events.
 
 ## Deliverables
-- Endpoint: `POST /v1/skills/{skill_id}/versions`.
-- Endpoint: `GET /v1/skills/{skill_id}/versions/{version}`.
-- Endpoint: `GET /v1/skills/{skill_id}/versions`.
+- Endpoint: `POST /skills/publish` (v1 path alias allowed).
+- Endpoint: `GET /skills/{id}/{version}` (v1 path alias allowed).
+- Endpoint: `GET /skills/{id}` for version listing (v1 path alias allowed).
 - Tables for skills, versions, and checksums.
 - Immutable artifact storage convention.
 - Audit event emission for publish and read.
@@ -34,6 +36,7 @@ Support publish and fetch of `skill@version` with strict immutability and integr
 - Re-publish of existing `skill_id+version` is rejected deterministically.
 - Checksum mismatch is detected and reported.
 - Published artifacts are never modified in place.
+- Repository write path is 100% API-enforced.
 
 ## Test Plan
 - Integration test: publish three versions and fetch each.
