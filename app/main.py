@@ -31,6 +31,7 @@ STARTUP_BANNER = r"""
   / ___  |   //   ) )   / /       
  //    | |  //___/ /   / /        
 //     | | //         / /      () 
+
 """
 
 # Configure logging before lifespan starts so startup logs are consistently formatted.
