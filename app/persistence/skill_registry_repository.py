@@ -573,7 +573,10 @@ def _sort_relationship_selectors(
 ) -> list[SkillRelationshipSelector]:
     return sorted(
         selectors,
-        key=lambda row: (_RELATIONSHIP_EDGE_ORDER[cast(RelationshipEdgeType, row.edge_type)], row.ordinal),
+        key=lambda row: (
+            _RELATIONSHIP_EDGE_ORDER[cast(RelationshipEdgeType, row.edge_type)],
+            row.ordinal,
+        ),
     )
 
 
