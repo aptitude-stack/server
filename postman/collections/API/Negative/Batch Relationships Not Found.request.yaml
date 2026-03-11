@@ -14,10 +14,15 @@ headers:
 
 body:
   type: json
-  content:
-    coordinates:
-      - slug: '{{negative_missing_slug}}'
-        version: '{{negative_missing_version}}'
+  content: |-
+    {
+      "coordinates": [
+        {
+          "slug": "{{negative_missing_slug}}",
+          "version": "{{negative_missing_version}}"
+        }
+      ]
+    }
 
 scripts:
   - type: afterResponse

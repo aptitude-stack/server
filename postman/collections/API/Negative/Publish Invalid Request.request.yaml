@@ -14,37 +14,43 @@ headers:
 
 body:
   type: json
-  content:
-    slug: '{{negative_invalid_slug}}'
-    version: '1.0.0'
-    content:
-      raw_markdown: |
-        # Invalid Postman Skill
-
-        This publish request should fail validation.
-      rendered_summary: Invalid request payload.
-    metadata:
-      name: Invalid Postman Skill
-      description: Invalid publish payload for negative coverage
-      tags:
-        - postman
-        - negative
-      headers:
-        runtime: python
-      inputs_schema:
-        type: object
-      outputs_schema:
-        type: object
-      token_estimate: 50
-      maturity_score: 0.5
-      security_score: 0.5
-    relationships:
-      depends_on:
-        - slug: '{{sanity_dependency_slug}}'
-          version_constraint: latest
-      extends: []
-      conflicts_with: []
-      overlaps_with: []
+  content: |-
+    {
+      "slug": "{{negative_invalid_slug}}",
+      "version": "1.0.0",
+      "content": {
+        "raw_markdown": "# Invalid Postman Skill\n\nThis publish request should fail validation.\n",
+        "rendered_summary": "Invalid request payload."
+      },
+      "metadata": {
+        "name": "Invalid Postman Skill",
+        "description": "Invalid publish payload for negative coverage",
+        "tags": ["postman", "negative"],
+        "headers": {
+          "runtime": "python"
+        },
+        "inputs_schema": {
+          "type": "object"
+        },
+        "outputs_schema": {
+          "type": "object"
+        },
+        "token_estimate": 50,
+        "maturity_score": 0.5,
+        "security_score": 0.5
+      },
+      "relationships": {
+        "depends_on": [
+          {
+            "slug": "{{sanity_dependency_slug}}",
+            "version_constraint": "latest"
+          }
+        ],
+        "extends": [],
+        "conflicts_with": [],
+        "overlaps_with": []
+      }
+    }
 
 scripts:
   - type: afterResponse

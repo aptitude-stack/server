@@ -14,36 +14,38 @@ headers:
 
 body:
   type: json
-  content:
-    slug: '{{sanity_overlap_slug}}'
-    version: '{{sanity_version_1}}'
-    content:
-      raw_markdown: |
-        # Postman Overlap Skill
-
-        Run `{{runId}}` overlap version 1.
-      rendered_summary: Postman overlap skill.
-    metadata:
-      name: Postman Overlap Skill
-      description: Overlap seed for relationship coverage
-      tags:
-        - postman
-        - sanity
-        - overlap
-      headers:
-        runtime: python
-      inputs_schema:
-        type: object
-      outputs_schema:
-        type: object
-      token_estimate: 130
-      maturity_score: 0.83
-      security_score: 0.92
-    relationships:
-      depends_on: []
-      extends: []
-      conflicts_with: []
-      overlaps_with: []
+  content: |-
+    {
+      "slug": "{{sanity_overlap_slug}}",
+      "version": "{{sanity_version_1}}",
+      "content": {
+        "raw_markdown": "# Postman Overlap Skill\n\nRun `{{runId}}` overlap version 1.\n",
+        "rendered_summary": "Postman overlap skill."
+      },
+      "metadata": {
+        "name": "Postman Overlap Skill",
+        "description": "Overlap seed for relationship coverage",
+        "tags": ["postman", "sanity", "overlap"],
+        "headers": {
+          "runtime": "python"
+        },
+        "inputs_schema": {
+          "type": "object"
+        },
+        "outputs_schema": {
+          "type": "object"
+        },
+        "token_estimate": 130,
+        "maturity_score": 0.83,
+        "security_score": 0.92
+      },
+      "relationships": {
+        "depends_on": [],
+        "extends": [],
+        "conflicts_with": [],
+        "overlaps_with": []
+      }
+    }
 
 scripts:
   - type: afterResponse

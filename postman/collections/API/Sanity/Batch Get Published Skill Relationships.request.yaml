@@ -14,10 +14,15 @@ headers:
 
 body:
   type: json
-  content:
-    coordinates:
-      - slug: '{{sanity_primary_slug}}'
-        version: '{{sanity_version_2}}'
+  content: |-
+    {
+      "coordinates": [
+        {
+          "slug": "{{sanity_primary_slug}}",
+          "version": "{{sanity_version_2}}"
+        }
+      ]
+    }
 
 scripts:
   - type: afterResponse

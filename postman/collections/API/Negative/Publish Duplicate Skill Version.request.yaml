@@ -14,36 +14,38 @@ headers:
 
 body:
   type: json
-  content:
-    slug: '{{negative_duplicate_slug}}'
-    version: '1.0.0'
-    content:
-      raw_markdown: |
-        # Duplicate Seed Skill
-
-        Initial version used to provoke a duplicate publish.
-      rendered_summary: Duplicate seed skill.
-    metadata:
-      name: Duplicate Seed Skill
-      description: Seed version for duplicate publish coverage
-      tags:
-        - postman
-        - negative
-        - duplicate
-      headers:
-        runtime: python
-      inputs_schema:
-        type: object
-      outputs_schema:
-        type: object
-      token_estimate: 75
-      maturity_score: 0.7
-      security_score: 0.8
-    relationships:
-      depends_on: []
-      extends: []
-      conflicts_with: []
-      overlaps_with: []
+  content: |-
+    {
+      "slug": "{{negative_duplicate_slug}}",
+      "version": "1.0.0",
+      "content": {
+        "raw_markdown": "# Duplicate Seed Skill\n\nInitial version used to provoke a duplicate publish.\n",
+        "rendered_summary": "Duplicate seed skill."
+      },
+      "metadata": {
+        "name": "Duplicate Seed Skill",
+        "description": "Seed version for duplicate publish coverage",
+        "tags": ["postman", "negative", "duplicate"],
+        "headers": {
+          "runtime": "python"
+        },
+        "inputs_schema": {
+          "type": "object"
+        },
+        "outputs_schema": {
+          "type": "object"
+        },
+        "token_estimate": 75,
+        "maturity_score": 0.7,
+        "security_score": 0.8
+      },
+      "relationships": {
+        "depends_on": [],
+        "extends": [],
+        "conflicts_with": [],
+        "overlaps_with": []
+      }
+    }
 
 scripts:
   - type: afterResponse

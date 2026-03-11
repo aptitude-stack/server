@@ -14,8 +14,10 @@ headers:
 
 body:
   type: json
-  content:
-    coordinates: []
+  content: |-
+    {
+      "coordinates": []
+    }
 
 scripts:
   - type: afterResponse
