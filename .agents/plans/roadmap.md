@@ -28,21 +28,22 @@ Deliver a production-ready, PyPI-like immutable registry service (`aptitude-serv
 4. `04-repository-api-contract-v1.md`
 5. `05-metadata-search-ranking.md`
 6. `06-policy-conflict-governance.md`
-7. `07-evaluation-repo-state-reproducibility.md`
-8. `08-operability-and-release-readiness.md`
-9. `09-postgres-content-addressed-artifact-cache.md`
-10. `10-hybrid-artifact-storage-and-git-provenance.md`
-11. `11-discovery-resolution-fetch-service-split.md`
+7. `07-canonical-postgres-storage-finalization.md`
+8. `08-public-api-simplification-and-contract-freeze.md`
+9. `09-governance-Provenance-and-audit-completion.md`
+10. `10-operability-and-release-readiness.md`
+11. `11-optional-evaluation-signals-and-snapshotting.md`
 
 ## PRD Phase Mapping
 - `MVP` (prd): milestones 01-04.
 - `v1.1` (prd): milestones 05-06.
-- `v2.0` prep (prd): milestones 07-08.
-- `v2.x` performance and cache hardening: milestone 09.
-- `v2.x` storage and provenance hardening: milestone 10.
+- `v2.0` prep (prd): milestones 07-09.
+- `Release readiness`: milestone 10.
+- `Post-launch optional discovery enhancements`: milestone 11.
 - Resolver-specific initiatives (prompt interpretation, deterministic solving, reranking, plugin chains, and lock replay) are tracked in resolver planning and are out of scope for this roadmap.
 
 ## Roadmap Rules
-- Plans are append-only.
+- Roadmap numbering is append-only.
+- Plan filenames and titles may be corrected before implementation when the existing milestone framing is architecturally wrong.
 - Completed plans are never renamed or renumbered.
 - New scope changes create a new numbered plan file.
