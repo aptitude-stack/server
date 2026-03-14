@@ -12,9 +12,7 @@ description: |-
     5. Publish Overlap Skill
     6. Publish Skill v1
     7. Publish Skill v2
-    8. Get Published Skill Identity
-    9. List Published Skill Versions
-    10. Fetch Published Skill Metadata
-    11. Fetch Published Skill Content
-    12. Search Published Skills
-    13. Batch Get Published Skill Relationships
+    8. Batch Fetch Published Skill Metadata
+    9. Batch Fetch Published Skill Content
+    10. Discover Published Skill Candidates
+    11. Resolve Published Skill Dependencies

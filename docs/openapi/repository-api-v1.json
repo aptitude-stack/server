@@ -22,46 +22,6 @@
         "title": "ChecksumResponse",
         "type": "object"
       },
-      "CurrentSkillVersionResponse": {
-        "description": "Current default version pointer for a skill identity.",
-        "properties": {
-          "lifecycle_status": {
-            "enum": [
-              "published",
-              "deprecated",
-              "archived"
-            ],
-            "title": "Lifecycle Status",
-            "type": "string"
-          },
-          "published_at": {
-            "format": "date-time",
-            "title": "Published At",
-            "type": "string"
-          },
-          "trust_tier": {
-            "enum": [
-              "untrusted",
-              "internal",
-              "verified"
-            ],
-            "title": "Trust Tier",
-            "type": "string"
-          },
-          "version": {
-            "title": "Version",
-            "type": "string"
-          }
-        },
-        "required": [
-          "version",
-          "lifecycle_status",
-          "trust_tier",
-          "published_at"
-        ],
-        "title": "CurrentSkillVersionResponse",
-        "type": "object"
-      },
       "DependencySelectorRequest": {
         "additionalProperties": false,
         "description": "Direct dependency selector authored for one version.",
@@ -126,6 +86,70 @@
           "slug"
         ],
         "title": "DependencySelectorRequest",
+        "type": "object"
+      },
+      "DependencySelectorResponse": {
+        "additionalProperties": false,
+        "description": "Direct dependency selector returned by resolution.",
+        "properties": {
+          "markers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Markers",
+            "type": "array"
+          },
+          "optional": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Optional"
+          },
+          "slug": {
+            "description": "Stable public slug of the dependency skill.",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,127})$",
+            "title": "Slug",
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Exact immutable dependency version.",
+            "title": "Version"
+          },
+          "version_constraint": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Comma-separated semver comparators.",
+            "title": "Version Constraint"
+          }
+        },
+        "required": [
+          "slug"
+        ],
+        "title": "DependencySelectorResponse",
         "type": "object"
       },
       "ErrorBody": {
@@ -265,7 +289,7 @@
         "type": "object"
       },
       "ProvenanceResponse": {
-        "description": "Minimal provenance returned by exact version reads.",
+        "description": "Minimal provenance returned by immutable version reads.",
         "properties": {
           "commit_sha": {
             "title": "Commit Sha",
@@ -352,70 +376,6 @@
         "title": "ReadyzResponse",
         "type": "object"
       },
-      "RelationshipSelectorResponse": {
-        "additionalProperties": false,
-        "description": "Authored relationship selector preserved exactly as published.",
-        "properties": {
-          "markers": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Markers",
-            "type": "array"
-          },
-          "optional": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Optional"
-          },
-          "slug": {
-            "description": "Stable public slug of the related skill.",
-            "maxLength": 128,
-            "minLength": 1,
-            "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,127})$",
-            "title": "Slug",
-            "type": "string"
-          },
-          "version": {
-            "anyOf": [
-              {
-                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Exact related version when the selector targets one immutable version.",
-            "title": "Version"
-          },
-          "version_constraint": {
-            "anyOf": [
-              {
-                "maxLength": 200,
-                "minLength": 1,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Authored dependency constraint when the selector is version-ranged.",
-            "title": "Version Constraint"
-          }
-        },
-        "required": [
-          "slug"
-        ],
-        "title": "RelationshipSelectorResponse",
-        "type": "object"
-      },
       "SkillContentSummaryResponse": {
         "description": "Compact content metadata returned without the full markdown body.",
         "properties": {
@@ -448,6 +408,85 @@
         "title": "SkillContentSummaryResponse",
         "type": "object"
       },
+      "SkillDependencyResolutionResponse": {
+        "description": "Exact direct dependency declarations for one immutable version.",
+        "properties": {
+          "depends_on": {
+            "items": {
+              "$ref": "#/components/schemas/DependencySelectorResponse"
+            },
+            "title": "Depends On",
+            "type": "array"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "version",
+          "depends_on"
+        ],
+        "title": "SkillDependencyResolutionResponse",
+        "type": "object"
+      },
+      "SkillDiscoveryRequest": {
+        "additionalProperties": false,
+        "description": "Body-based discovery request.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "SkillDiscoveryRequest",
+        "type": "object"
+      },
+      "SkillDiscoveryResponse": {
+        "description": "Ordered candidate slugs returned by discovery.",
+        "properties": {
+          "candidates": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Candidates",
+            "type": "array"
+          }
+        },
+        "required": [
+          "candidates"
+        ],
+        "title": "SkillDiscoveryResponse",
+        "type": "object"
+      },
       "SkillGovernanceRequest": {
         "additionalProperties": false,
         "description": "Governance metadata supplied at publish time.",
@@ -476,55 +515,8 @@
         "title": "SkillGovernanceRequest",
         "type": "object"
       },
-      "SkillIdentityResponse": {
-        "description": "Logical skill identity response.",
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "current_version": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/CurrentSkillVersionResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "slug": {
-            "title": "Slug",
-            "type": "string"
-          },
-          "status": {
-            "enum": [
-              "published",
-              "deprecated",
-              "archived"
-            ],
-            "title": "Status",
-            "type": "string"
-          },
-          "updated_at": {
-            "format": "date-time",
-            "title": "Updated At",
-            "type": "string"
-          }
-        },
-        "required": [
-          "slug",
-          "status",
-          "current_version",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "SkillIdentityResponse",
-        "type": "object"
-      },
       "SkillMetadataResponse": {
-        "description": "Full normalized metadata block returned by exact fetch responses.",
+        "description": "Full normalized metadata block returned by immutable metadata reads.",
         "properties": {
           "description": {
             "anyOf": [
@@ -626,79 +618,9 @@
         "title": "SkillMetadataResponse",
         "type": "object"
       },
-      "SkillMetadataSummaryResponse": {
-        "description": "Compact metadata summary used in list and relationship responses.",
-        "properties": {
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Tags",
-            "type": "array"
-          }
-        },
-        "required": [
-          "name",
-          "description",
-          "tags"
-        ],
-        "title": "SkillMetadataSummaryResponse",
-        "type": "object"
-      },
-      "SkillRelationshipBatchItemResponse": {
-        "description": "One ordered direct relationship lookup result.",
-        "properties": {
-          "coordinate": {
-            "$ref": "#/components/schemas/SkillVersionCoordinateRequest"
-          },
-          "relationships": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/SkillRelationshipEdgeResponse"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Relationships"
-          },
-          "status": {
-            "enum": [
-              "found",
-              "not_found"
-            ],
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "status",
-          "coordinate"
-        ],
-        "title": "SkillRelationshipBatchItemResponse",
-        "type": "object"
-      },
-      "SkillRelationshipBatchRequest": {
+      "SkillVersionBatchRequest": {
         "additionalProperties": false,
-        "description": "Ordered direct relationship query over immutable source versions.",
+        "description": "Ordered exact immutable coordinate batch request.",
         "properties": {
           "coordinates": {
             "items": {
@@ -708,225 +630,12 @@
             "minItems": 1,
             "title": "Coordinates",
             "type": "array"
-          },
-          "edge_types": {
-            "items": {
-              "enum": [
-                "depends_on",
-                "extends",
-                "conflicts_with",
-                "overlaps_with"
-              ],
-              "type": "string"
-            },
-            "title": "Edge Types",
-            "type": "array"
           }
         },
         "required": [
           "coordinates"
         ],
-        "title": "SkillRelationshipBatchRequest",
-        "type": "object"
-      },
-      "SkillRelationshipBatchResponse": {
-        "description": "Ordered batch response for direct immutable relationship reads.",
-        "properties": {
-          "results": {
-            "items": {
-              "$ref": "#/components/schemas/SkillRelationshipBatchItemResponse"
-            },
-            "title": "Results",
-            "type": "array"
-          }
-        },
-        "required": [
-          "results"
-        ],
-        "title": "SkillRelationshipBatchResponse",
-        "type": "object"
-      },
-      "SkillRelationshipEdgeResponse": {
-        "description": "One direct authored relationship edge from an immutable source version.",
-        "properties": {
-          "edge_type": {
-            "enum": [
-              "depends_on",
-              "extends",
-              "conflicts_with",
-              "overlaps_with"
-            ],
-            "title": "Edge Type",
-            "type": "string"
-          },
-          "selector": {
-            "$ref": "#/components/schemas/RelationshipSelectorResponse"
-          },
-          "target_version": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SkillVersionReferenceResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "edge_type",
-          "selector"
-        ],
-        "title": "SkillRelationshipEdgeResponse",
-        "type": "object"
-      },
-      "SkillRelationshipResponse": {
-        "description": "One authored relationship plus optional exact target enrichment.",
-        "properties": {
-          "selector": {
-            "$ref": "#/components/schemas/RelationshipSelectorResponse"
-          },
-          "target_version": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SkillVersionReferenceResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "selector"
-        ],
-        "title": "SkillRelationshipResponse",
-        "type": "object"
-      },
-      "SkillSearchResponse": {
-        "description": "Compact advisory search response.",
-        "properties": {
-          "results": {
-            "items": {
-              "$ref": "#/components/schemas/SkillSearchResultResponse"
-            },
-            "title": "Results",
-            "type": "array"
-          }
-        },
-        "required": [
-          "results"
-        ],
-        "title": "SkillSearchResponse",
-        "type": "object"
-      },
-      "SkillSearchResultResponse": {
-        "description": "Compact advisory candidate returned by the search API.",
-        "properties": {
-          "content_size_bytes": {
-            "title": "Content Size Bytes",
-            "type": "integer"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "freshness_days": {
-            "title": "Freshness Days",
-            "type": "integer"
-          },
-          "lifecycle_status": {
-            "enum": [
-              "published",
-              "deprecated",
-              "archived"
-            ],
-            "title": "Lifecycle Status",
-            "type": "string"
-          },
-          "matched_fields": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Matched Fields",
-            "type": "array"
-          },
-          "matched_tags": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Matched Tags",
-            "type": "array"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "published_at": {
-            "format": "date-time",
-            "title": "Published At",
-            "type": "string"
-          },
-          "reasons": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Reasons",
-            "type": "array"
-          },
-          "slug": {
-            "title": "Slug",
-            "type": "string"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Tags",
-            "type": "array"
-          },
-          "trust_tier": {
-            "enum": [
-              "untrusted",
-              "internal",
-              "verified"
-            ],
-            "title": "Trust Tier",
-            "type": "string"
-          },
-          "usage_count": {
-            "title": "Usage Count",
-            "type": "integer"
-          },
-          "version": {
-            "title": "Version",
-            "type": "string"
-          }
-        },
-        "required": [
-          "slug",
-          "version",
-          "name",
-          "description",
-          "tags",
-          "lifecycle_status",
-          "trust_tier",
-          "published_at",
-          "freshness_days",
-          "content_size_bytes",
-          "usage_count",
-          "matched_fields",
-          "matched_tags",
-          "reasons"
-        ],
-        "title": "SkillSearchResultResponse",
+        "title": "SkillVersionBatchRequest",
         "type": "object"
       },
       "SkillVersionContentRequest": {
@@ -1023,26 +732,53 @@
         "title": "SkillVersionCreateRequest",
         "type": "object"
       },
-      "SkillVersionListResponse": {
-        "description": "Deterministic version list for one skill identity.",
+      "SkillVersionMetadataBatchItemResponse": {
+        "description": "One ordered immutable metadata batch result.",
         "properties": {
-          "slug": {
-            "title": "Slug",
-            "type": "string"
+          "coordinate": {
+            "$ref": "#/components/schemas/SkillVersionCoordinateRequest"
           },
-          "versions": {
+          "item": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SkillVersionMetadataResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "found",
+              "not_found"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "coordinate"
+        ],
+        "title": "SkillVersionMetadataBatchItemResponse",
+        "type": "object"
+      },
+      "SkillVersionMetadataBatchResponse": {
+        "description": "Ordered immutable metadata batch response.",
+        "properties": {
+          "results": {
             "items": {
-              "$ref": "#/components/schemas/SkillVersionSummaryResponse"
+              "$ref": "#/components/schemas/SkillVersionMetadataBatchItemResponse"
             },
-            "title": "Versions",
+            "title": "Results",
             "type": "array"
           }
         },
         "required": [
-          "slug",
-          "versions"
+          "results"
         ],
-        "title": "SkillVersionListResponse",
+        "title": "SkillVersionMetadataBatchResponse",
         "type": "object"
       },
       "SkillVersionMetadataRequest": {
@@ -1163,19 +899,11 @@
         "title": "SkillVersionMetadataRequest",
         "type": "object"
       },
-      "SkillVersionReferenceResponse": {
-        "description": "Compact exact version reference.",
+      "SkillVersionMetadataResponse": {
+        "description": "Immutable metadata envelope returned by publish and metadata batch fetch.",
         "properties": {
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+          "content": {
+            "$ref": "#/components/schemas/SkillContentSummaryResponse"
           },
           "lifecycle_status": {
             "enum": [
@@ -1186,9 +914,18 @@
             "title": "Lifecycle Status",
             "type": "string"
           },
-          "name": {
-            "title": "Name",
-            "type": "string"
+          "metadata": {
+            "$ref": "#/components/schemas/SkillMetadataResponse"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProvenanceResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "published_at": {
             "format": "date-time",
@@ -1198,13 +935,6 @@
           "slug": {
             "title": "Slug",
             "type": "string"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Tags",
-            "type": "array"
           },
           "trust_tier": {
             "enum": [
@@ -1218,19 +948,22 @@
           "version": {
             "title": "Version",
             "type": "string"
+          },
+          "version_checksum": {
+            "$ref": "#/components/schemas/ChecksumResponse"
           }
         },
         "required": [
           "slug",
           "version",
-          "name",
-          "description",
-          "tags",
+          "version_checksum",
+          "content",
+          "metadata",
           "lifecycle_status",
           "trust_tier",
           "published_at"
         ],
-        "title": "SkillVersionReferenceResponse",
+        "title": "SkillVersionMetadataResponse",
         "type": "object"
       },
       "SkillVersionRelationshipsRequest": {
@@ -1267,117 +1000,6 @@
           }
         },
         "title": "SkillVersionRelationshipsRequest",
-        "type": "object"
-      },
-      "SkillVersionRelationshipsResponse": {
-        "description": "Grouped relationships returned in exact fetch responses.",
-        "properties": {
-          "conflicts_with": {
-            "items": {
-              "$ref": "#/components/schemas/SkillRelationshipResponse"
-            },
-            "title": "Conflicts With",
-            "type": "array"
-          },
-          "depends_on": {
-            "items": {
-              "$ref": "#/components/schemas/SkillRelationshipResponse"
-            },
-            "title": "Depends On",
-            "type": "array"
-          },
-          "extends": {
-            "items": {
-              "$ref": "#/components/schemas/SkillRelationshipResponse"
-            },
-            "title": "Extends",
-            "type": "array"
-          },
-          "overlaps_with": {
-            "items": {
-              "$ref": "#/components/schemas/SkillRelationshipResponse"
-            },
-            "title": "Overlaps With",
-            "type": "array"
-          }
-        },
-        "title": "SkillVersionRelationshipsResponse",
-        "type": "object"
-      },
-      "SkillVersionResponse": {
-        "description": "Normalized exact immutable version metadata response.",
-        "properties": {
-          "content": {
-            "$ref": "#/components/schemas/SkillContentSummaryResponse"
-          },
-          "content_download_path": {
-            "title": "Content Download Path",
-            "type": "string"
-          },
-          "lifecycle_status": {
-            "enum": [
-              "published",
-              "deprecated",
-              "archived"
-            ],
-            "title": "Lifecycle Status",
-            "type": "string"
-          },
-          "metadata": {
-            "$ref": "#/components/schemas/SkillMetadataResponse"
-          },
-          "provenance": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ProvenanceResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "published_at": {
-            "format": "date-time",
-            "title": "Published At",
-            "type": "string"
-          },
-          "relationships": {
-            "$ref": "#/components/schemas/SkillVersionRelationshipsResponse"
-          },
-          "slug": {
-            "title": "Slug",
-            "type": "string"
-          },
-          "trust_tier": {
-            "enum": [
-              "untrusted",
-              "internal",
-              "verified"
-            ],
-            "title": "Trust Tier",
-            "type": "string"
-          },
-          "version": {
-            "title": "Version",
-            "type": "string"
-          },
-          "version_checksum": {
-            "$ref": "#/components/schemas/ChecksumResponse"
-          }
-        },
-        "required": [
-          "slug",
-          "version",
-          "version_checksum",
-          "content",
-          "metadata",
-          "lifecycle_status",
-          "trust_tier",
-          "relationships",
-          "published_at",
-          "content_download_path"
-        ],
-        "title": "SkillVersionResponse",
         "type": "object"
       },
       "SkillVersionStatusResponse": {
@@ -1461,63 +1083,6 @@
         ],
         "title": "SkillVersionStatusUpdateRequest",
         "type": "object"
-      },
-      "SkillVersionSummaryResponse": {
-        "description": "Summary view for one immutable version in version-list and batch responses.",
-        "properties": {
-          "content": {
-            "$ref": "#/components/schemas/SkillContentSummaryResponse"
-          },
-          "lifecycle_status": {
-            "enum": [
-              "published",
-              "deprecated",
-              "archived"
-            ],
-            "title": "Lifecycle Status",
-            "type": "string"
-          },
-          "metadata": {
-            "$ref": "#/components/schemas/SkillMetadataSummaryResponse"
-          },
-          "published_at": {
-            "format": "date-time",
-            "title": "Published At",
-            "type": "string"
-          },
-          "slug": {
-            "title": "Slug",
-            "type": "string"
-          },
-          "trust_tier": {
-            "enum": [
-              "untrusted",
-              "internal",
-              "verified"
-            ],
-            "title": "Trust Tier",
-            "type": "string"
-          },
-          "version": {
-            "title": "Version",
-            "type": "string"
-          },
-          "version_checksum": {
-            "$ref": "#/components/schemas/ChecksumResponse"
-          }
-        },
-        "required": [
-          "slug",
-          "version",
-          "version_checksum",
-          "content",
-          "metadata",
-          "lifecycle_status",
-          "trust_tier",
-          "published_at"
-        ],
-        "title": "SkillVersionSummaryResponse",
-        "type": "object"
       }
     },
     "securitySchemes": {
@@ -1528,268 +1093,71 @@
     }
   },
   "info": {
-    "description": "Registry-first API for immutable skill publication, indexed search candidate\nretrieval, direct relationship reads, exact version retrieval, artifact streaming,\nand version listing.\n\nThe server owns data-local registry operations only. Prompt interpretation,\nreranking, dependency solving, final selection, lock generation, and execution\nplanning remain client-owned behavior outside this API boundary.",
+    "description": "Registry-first API for immutable skill publication, candidate discovery,\nexact dependency reads, immutable metadata batch fetch, immutable content batch\nfetch, and governed lifecycle updates.\n\nThe server owns data-local registry operations only. Prompt interpretation,\nreranking, dependency solving, final selection, lock generation, and execution\nplanning remain client-owned behavior outside this API boundary.",
     "title": "aptitude-server Service",
     "version": "1.0.0"
   },
   "openapi": "3.1.0",
   "paths": {
-    "/discovery/skills/search": {
-      "get": {
-        "description": "Return compact advisory candidates from indexed metadata and description search. This route is discovery-only: it does not resolve relationships, choose a final candidate, or perform dependency solving.",
-        "operationId": "searchDiscoverySkills",
-        "parameters": [
-          {
-            "description": "Full-text discovery query.",
-            "in": "query",
-            "name": "q",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Full-text discovery query.",
-              "title": "Q"
+    "/discovery": {
+      "post": {
+        "description": "Return ordered candidate slugs from indexed metadata and description search. This route is discovery-only: it does not resolve dependencies, choose a final candidate, or perform solver behavior.",
+        "operationId": "discoverSkillCandidates",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "description": "Lint Python files consistently",
+                "name": "Python Lint",
+                "tags": [
+                  "python",
+                  "lint"
+                ]
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SkillDiscoveryRequest"
+              }
             }
           },
-          {
-            "description": "Repeatable tag filter; all values must match.",
-            "in": "query",
-            "name": "tag",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Repeatable tag filter; all values must match.",
-              "title": "Tag"
-            }
-          },
-          {
-            "description": "Language alias filter implemented as a normalized tag.",
-            "in": "query",
-            "name": "language",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Language alias filter implemented as a normalized tag.",
-              "title": "Language"
-            }
-          },
-          {
-            "description": "Maximum age in days since publication.",
-            "in": "query",
-            "name": "fresh_within_days",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "minimum": 0,
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Maximum age in days since publication.",
-              "title": "Fresh Within Days"
-            }
-          },
-          {
-            "description": "Maximum allowed markdown size in bytes.",
-            "in": "query",
-            "name": "max_content_size_bytes",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "minimum": 0,
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Maximum allowed markdown size in bytes.",
-              "title": "Max Content Size Bytes"
-            }
-          },
-          {
-            "description": "Repeatable lifecycle-state filter.",
-            "in": "query",
-            "name": "status",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "items": {
-                    "enum": [
-                      "published",
-                      "deprecated",
-                      "archived"
-                    ],
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Repeatable lifecycle-state filter.",
-              "title": "Status"
-            }
-          },
-          {
-            "description": "Repeatable trust-tier filter.",
-            "in": "query",
-            "name": "trust_tier",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "items": {
-                    "enum": [
-                      "untrusted",
-                      "internal",
-                      "verified"
-                    ],
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Repeatable trust-tier filter.",
-              "title": "Trust Tier"
-            }
-          },
-          {
-            "description": "Maximum number of skill candidates to return.",
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 20,
-              "description": "Maximum number of skill candidates to return.",
-              "maximum": 50,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          }
-        ],
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "example": {
-                  "results": [
-                    {
-                      "content_size_bytes": 123,
-                      "description": "Linting skill",
-                      "freshness_days": 0,
-                      "lifecycle_status": "published",
-                      "matched_fields": [
-                        "name",
-                        "tags"
-                      ],
-                      "matched_tags": [
-                        "python"
-                      ],
-                      "name": "Python Lint",
-                      "published_at": "2026-03-10T08:30:00Z",
-                      "reasons": [
-                        "text_match",
-                        "tag_filter_match"
-                      ],
-                      "slug": "python.lint",
-                      "tags": [
-                        "python",
-                        "lint"
-                      ],
-                      "trust_tier": "internal",
-                      "usage_count": 0,
-                      "version": "1.2.3"
-                    }
+                  "candidates": [
+                    "python.lint",
+                    "python.format"
                   ]
                 },
                 "schema": {
-                  "$ref": "#/components/schemas/SkillSearchResponse"
+                  "$ref": "#/components/schemas/SkillDiscoveryResponse"
                 }
               }
             },
-            "description": "Compact advisory skill candidates returned successfully."
+            "description": "Ordered candidate slugs returned successfully."
           },
           "422": {
             "content": {
               "application/json": {
-                "examples": {
-                  "invalid_request": {
-                    "value": {
-                      "error": {
-                        "code": "INVALID_REQUEST",
-                        "details": {
-                          "errors": [
-                            {
-                              "input": "latest",
-                              "loc": [
-                                "path",
-                                "version"
-                              ],
-                              "msg": "String should match pattern",
-                              "type": "string_pattern_mismatch"
-                            }
-                          ]
-                        },
-                        "message": "Request validation failed."
-                      }
-                    }
-                  },
-                  "missing_selector": {
-                    "value": {
-                      "error": {
-                        "code": "INVALID_REQUEST",
-                        "details": {
-                          "errors": [
-                            {
-                              "input": {
-                                "limit": 20,
-                                "status": [],
-                                "tags": [],
-                                "trust_tier": []
-                              },
-                              "loc": [],
-                              "msg": "Value error, At least one search selector must be provided.",
-                              "type": "value_error"
-                            }
-                          ]
-                        },
-                        "message": "Search request validation failed."
-                      }
-                    }
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "details": {
+                      "errors": [
+                        {
+                          "input": "latest",
+                          "loc": [
+                            "path",
+                            "version"
+                          ],
+                          "msg": "String should match pattern",
+                          "type": "string_pattern_mismatch"
+                        }
+                      ]
+                    },
+                    "message": "Request validation failed."
                   }
                 },
                 "schema": {
@@ -1805,9 +1173,231 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "Search skill discovery metadata",
+        "summary": "Discover candidate skill slugs",
         "tags": [
           "discovery"
+        ]
+      }
+    },
+    "/fetch/content:batch": {
+      "post": {
+        "description": "Return immutable markdown content as `multipart/mixed` in request order. Each part includes coordinate and status headers.",
+        "operationId": "batchGetImmutableContent",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "coordinates": [
+                  {
+                    "slug": "python.lint",
+                    "version": "1.2.3"
+                  },
+                  {
+                    "slug": "python.missing",
+                    "version": "9.9.9"
+                  }
+                ]
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SkillVersionBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "multipart/mixed": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Ordered immutable markdown parts returned successfully."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "details": {
+                      "errors": [
+                        {
+                          "input": "latest",
+                          "loc": [
+                            "path",
+                            "version"
+                          ],
+                          "msg": "String should match pattern",
+                          "type": "string_pattern_mismatch"
+                        }
+                      ]
+                    },
+                    "message": "Request validation failed."
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "The request body is invalid."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Fetch immutable markdown content in batch",
+        "tags": [
+          "fetch"
+        ]
+      }
+    },
+    "/fetch/metadata:batch": {
+      "post": {
+        "description": "Return immutable metadata envelopes for an ordered list of exact coordinates. Missing coordinates are returned as `not_found` items.",
+        "operationId": "batchGetImmutableMetadata",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "coordinates": [
+                  {
+                    "slug": "python.lint",
+                    "version": "1.2.3"
+                  },
+                  {
+                    "slug": "python.missing",
+                    "version": "9.9.9"
+                  }
+                ]
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SkillVersionBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "results": [
+                    {
+                      "coordinate": {
+                        "slug": "python.lint",
+                        "version": "1.2.3"
+                      },
+                      "item": {
+                        "content": {
+                          "checksum": {
+                            "algorithm": "sha256",
+                            "digest": "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"
+                          },
+                          "rendered_summary": "Lint Python files consistently.",
+                          "size_bytes": 123
+                        },
+                        "lifecycle_status": "published",
+                        "metadata": {
+                          "description": "Linting skill",
+                          "headers": {
+                            "runtime": "python"
+                          },
+                          "inputs_schema": {
+                            "type": "object"
+                          },
+                          "maturity_score": 0.9,
+                          "name": "Python Lint",
+                          "outputs_schema": {
+                            "type": "object"
+                          },
+                          "security_score": 0.95,
+                          "tags": [
+                            "python",
+                            "lint"
+                          ],
+                          "token_estimate": 128
+                        },
+                        "provenance": {
+                          "commit_sha": "aabbccddeeff00112233445566778899aabbccdd",
+                          "repo_url": "https://github.com/example/skills",
+                          "tree_path": "skills/python.lint"
+                        },
+                        "published_at": "2026-03-10T08:30:00Z",
+                        "slug": "python.lint",
+                        "trust_tier": "internal",
+                        "version": "1.2.3",
+                        "version_checksum": {
+                          "algorithm": "sha256",
+                          "digest": "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"
+                        }
+                      },
+                      "status": "found"
+                    },
+                    {
+                      "coordinate": {
+                        "slug": "python.missing",
+                        "version": "9.9.9"
+                      },
+                      "status": "not_found"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SkillVersionMetadataBatchResponse"
+                }
+              }
+            },
+            "description": "Ordered immutable metadata results returned successfully."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "details": {
+                      "errors": [
+                        {
+                          "input": "latest",
+                          "loc": [
+                            "path",
+                            "version"
+                          ],
+                          "msg": "String should match pattern",
+                          "type": "string_pattern_mismatch"
+                        }
+                      ]
+                    },
+                    "message": "Request validation failed."
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "The request body is invalid."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Fetch immutable metadata in batch",
+        "tags": [
+          "fetch"
         ]
       }
     },
@@ -1855,83 +1445,81 @@
         ]
       }
     },
-    "/resolution/relationships:batch": {
-      "post": {
-        "description": "Return authored direct `depends_on` and `extends` relationships for exact immutable source versions. This route does not expand transitive graphs, select versions for constraints, or emit solved dependency closures.",
-        "operationId": "batchGetDirectSkillRelationships",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SkillRelationshipBatchRequest"
-              }
+    "/resolution/{slug}/{version}": {
+      "get": {
+        "description": "Return authored direct `depends_on` declarations for one exact immutable version. This route does not recurse, solve version constraints, or return non-dependency relationship families.",
+        "operationId": "getDirectDependencies",
+        "parameters": [
+          {
+            "description": "Stable public slug of the skill to resolve.",
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "description": "Stable public slug of the skill to resolve.",
+              "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,127})$",
+              "title": "Slug",
+              "type": "string"
             }
           },
-          "required": true
-        },
+          {
+            "description": "Exact immutable semantic version to resolve.",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "description": "Exact immutable semantic version to resolve.",
+              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
+              "title": "Version",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "example": {
-                  "results": [
+                  "depends_on": [
                     {
-                      "coordinate": {
-                        "slug": "python.lint",
-                        "version": "1.2.3"
-                      },
-                      "relationships": [
-                        {
-                          "edge_type": "depends_on",
-                          "selector": {
-                            "markers": [
-                              "linux",
-                              "gpu"
-                            ],
-                            "optional": true,
-                            "slug": "python.base",
-                            "version_constraint": ">=1.0.0,<2.0.0"
-                          }
-                        },
-                        {
-                          "edge_type": "extends",
-                          "selector": {
-                            "markers": [],
-                            "slug": "python.base",
-                            "version": "1.0.0"
-                          },
-                          "target_version": {
-                            "description": "Base runtime skill",
-                            "lifecycle_status": "published",
-                            "name": "Python Base",
-                            "published_at": "2026-03-01T08:30:00Z",
-                            "slug": "python.base",
-                            "tags": [
-                              "python",
-                              "runtime"
-                            ],
-                            "trust_tier": "verified",
-                            "version": "1.0.0"
-                          }
-                        }
+                      "markers": [
+                        "linux",
+                        "gpu"
                       ],
-                      "status": "found"
-                    },
-                    {
-                      "coordinate": {
-                        "slug": "python.missing",
-                        "version": "9.9.9"
-                      },
-                      "status": "not_found"
+                      "optional": true,
+                      "slug": "python.base",
+                      "version_constraint": ">=1.0.0,<2.0.0"
                     }
-                  ]
+                  ],
+                  "slug": "python.lint",
+                  "version": "1.2.3"
                 },
                 "schema": {
-                  "$ref": "#/components/schemas/SkillRelationshipBatchResponse"
+                  "$ref": "#/components/schemas/SkillDependencyResolutionResponse"
                 }
               }
             },
-            "description": "Ordered direct relationship results returned successfully."
+            "description": "Direct dependency declarations returned successfully."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "SKILL_VERSION_NOT_FOUND",
+                    "details": {
+                      "slug": "python.lint",
+                      "version": "9.9.9"
+                    },
+                    "message": "Skill version not found: python.lint@9.9.9"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "The requested immutable `slug@version` does not exist."
           },
           "422": {
             "content": {
@@ -1960,7 +1548,7 @@
                 }
               }
             },
-            "description": "The relationship query request is invalid."
+            "description": "The path parameters are invalid."
           }
         },
         "security": [
@@ -1968,7 +1556,7 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "Read direct immutable relationships",
+        "summary": "Read direct immutable dependencies",
         "tags": [
           "resolution"
         ]
@@ -2063,7 +1651,6 @@
                     "rendered_summary": "Lint Python files consistently.",
                     "size_bytes": 123
                   },
-                  "content_download_path": "/skills/python.lint/versions/1.2.3/content",
                   "lifecycle_status": "published",
                   "metadata": {
                     "description": "Linting skill",
@@ -2091,53 +1678,6 @@
                     "tree_path": "skills/python.lint"
                   },
                   "published_at": "2026-03-10T08:30:00Z",
-                  "relationships": {
-                    "conflicts_with": [],
-                    "depends_on": [
-                      {
-                        "selector": {
-                          "markers": [
-                            "linux",
-                            "gpu"
-                          ],
-                          "optional": true,
-                          "slug": "python.base",
-                          "version_constraint": ">=1.0.0,<2.0.0"
-                        }
-                      }
-                    ],
-                    "extends": [
-                      {
-                        "selector": {
-                          "markers": [],
-                          "slug": "python.base",
-                          "version": "1.0.0"
-                        },
-                        "target_version": {
-                          "description": "Base runtime skill",
-                          "lifecycle_status": "published",
-                          "name": "Python Base",
-                          "published_at": "2026-03-01T08:30:00Z",
-                          "slug": "python.base",
-                          "tags": [
-                            "python",
-                            "runtime"
-                          ],
-                          "trust_tier": "verified",
-                          "version": "1.0.0"
-                        }
-                      }
-                    ],
-                    "overlaps_with": [
-                      {
-                        "selector": {
-                          "markers": [],
-                          "slug": "python.format",
-                          "version": "1.0.0"
-                        }
-                      }
-                    ]
-                  },
                   "slug": "python.lint",
                   "trust_tier": "internal",
                   "version": "1.2.3",
@@ -2147,7 +1687,7 @@
                   }
                 },
                 "schema": {
-                  "$ref": "#/components/schemas/SkillVersionResponse"
+                  "$ref": "#/components/schemas/SkillVersionMetadataResponse"
                 }
               }
             },
@@ -2227,523 +1767,6 @@
         "summary": "Publish an immutable skill version",
         "tags": [
           "skills"
-        ]
-      }
-    },
-    "/skills/{slug}": {
-      "get": {
-        "description": "Return the normalized identity row for a skill slug.",
-        "operationId": "getSkillIdentity",
-        "parameters": [
-          {
-            "description": "Stable public slug of the skill.",
-            "in": "path",
-            "name": "slug",
-            "required": true,
-            "schema": {
-              "description": "Stable public slug of the skill.",
-              "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,127})$",
-              "title": "Slug",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "created_at": "2026-02-10T08:30:00Z",
-                  "current_version": {
-                    "lifecycle_status": "published",
-                    "published_at": "2026-03-10T08:30:00Z",
-                    "trust_tier": "internal",
-                    "version": "1.2.3"
-                  },
-                  "slug": "python.lint",
-                  "status": "published",
-                  "updated_at": "2026-03-10T08:30:00Z"
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/SkillIdentityResponse"
-                }
-              }
-            },
-            "description": "Logical skill identity returned successfully."
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": {
-                    "code": "SKILL_NOT_FOUND",
-                    "details": {
-                      "slug": "python.lint"
-                    },
-                    "message": "Skill not found: python.lint"
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "The requested skill slug does not exist."
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": {
-                    "code": "INVALID_REQUEST",
-                    "details": {
-                      "errors": [
-                        {
-                          "input": "latest",
-                          "loc": [
-                            "path",
-                            "version"
-                          ],
-                          "msg": "String should match pattern",
-                          "type": "string_pattern_mismatch"
-                        }
-                      ]
-                    },
-                    "message": "Request validation failed."
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "The request body, path parameters, or query parameters are invalid."
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Fetch one logical skill identity",
-        "tags": [
-          "skills"
-        ]
-      }
-    },
-    "/skills/{slug}/versions": {
-      "get": {
-        "description": "Return immutable versions in deterministic reverse chronological order.",
-        "operationId": "listSkillVersions",
-        "parameters": [
-          {
-            "description": "Stable public slug of the skill.",
-            "in": "path",
-            "name": "slug",
-            "required": true,
-            "schema": {
-              "description": "Stable public slug of the skill.",
-              "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,127})$",
-              "title": "Slug",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "slug": "python.lint",
-                  "versions": [
-                    {
-                      "content": {
-                        "checksum": {
-                          "algorithm": "sha256",
-                          "digest": "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"
-                        },
-                        "rendered_summary": "Lint Python files consistently.",
-                        "size_bytes": 123
-                      },
-                      "lifecycle_status": "published",
-                      "metadata": {
-                        "description": "Linting skill",
-                        "name": "Python Lint",
-                        "tags": [
-                          "python",
-                          "lint"
-                        ]
-                      },
-                      "published_at": "2026-03-10T08:30:00Z",
-                      "slug": "python.lint",
-                      "trust_tier": "internal",
-                      "version": "1.2.3",
-                      "version_checksum": {
-                        "algorithm": "sha256",
-                        "digest": "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"
-                      }
-                    }
-                  ]
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/SkillVersionListResponse"
-                }
-              }
-            },
-            "description": "Immutable versions listed successfully."
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": {
-                    "code": "SKILL_NOT_FOUND",
-                    "details": {
-                      "slug": "python.lint"
-                    },
-                    "message": "Skill not found: python.lint"
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "The requested skill slug does not exist."
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": {
-                    "code": "INVALID_REQUEST",
-                    "details": {
-                      "errors": [
-                        {
-                          "input": "latest",
-                          "loc": [
-                            "path",
-                            "version"
-                          ],
-                          "msg": "String should match pattern",
-                          "type": "string_pattern_mismatch"
-                        }
-                      ]
-                    },
-                    "message": "Request validation failed."
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "The request body, path parameters, or query parameters are invalid."
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "List immutable versions for one skill",
-        "tags": [
-          "skills"
-        ]
-      }
-    },
-    "/skills/{slug}/versions/{version}": {
-      "get": {
-        "description": "Return the normalized metadata for one exact immutable skill version. This route does not inline the raw markdown body.",
-        "operationId": "getExactSkillVersionMetadata",
-        "parameters": [
-          {
-            "description": "Stable public slug of the skill to fetch.",
-            "in": "path",
-            "name": "slug",
-            "required": true,
-            "schema": {
-              "description": "Stable public slug of the skill to fetch.",
-              "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,127})$",
-              "title": "Slug",
-              "type": "string"
-            }
-          },
-          {
-            "description": "Exact immutable semantic version to fetch.",
-            "in": "path",
-            "name": "version",
-            "required": true,
-            "schema": {
-              "description": "Exact immutable semantic version to fetch.",
-              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
-              "title": "Version",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "content": {
-                    "checksum": {
-                      "algorithm": "sha256",
-                      "digest": "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"
-                    },
-                    "rendered_summary": "Lint Python files consistently.",
-                    "size_bytes": 123
-                  },
-                  "content_download_path": "/skills/python.lint/versions/1.2.3/content",
-                  "lifecycle_status": "published",
-                  "metadata": {
-                    "description": "Linting skill",
-                    "headers": {
-                      "runtime": "python"
-                    },
-                    "inputs_schema": {
-                      "type": "object"
-                    },
-                    "maturity_score": 0.9,
-                    "name": "Python Lint",
-                    "outputs_schema": {
-                      "type": "object"
-                    },
-                    "security_score": 0.95,
-                    "tags": [
-                      "python",
-                      "lint"
-                    ],
-                    "token_estimate": 128
-                  },
-                  "provenance": {
-                    "commit_sha": "aabbccddeeff00112233445566778899aabbccdd",
-                    "repo_url": "https://github.com/example/skills",
-                    "tree_path": "skills/python.lint"
-                  },
-                  "published_at": "2026-03-10T08:30:00Z",
-                  "relationships": {
-                    "conflicts_with": [],
-                    "depends_on": [
-                      {
-                        "selector": {
-                          "markers": [
-                            "linux",
-                            "gpu"
-                          ],
-                          "optional": true,
-                          "slug": "python.base",
-                          "version_constraint": ">=1.0.0,<2.0.0"
-                        }
-                      }
-                    ],
-                    "extends": [
-                      {
-                        "selector": {
-                          "markers": [],
-                          "slug": "python.base",
-                          "version": "1.0.0"
-                        },
-                        "target_version": {
-                          "description": "Base runtime skill",
-                          "lifecycle_status": "published",
-                          "name": "Python Base",
-                          "published_at": "2026-03-01T08:30:00Z",
-                          "slug": "python.base",
-                          "tags": [
-                            "python",
-                            "runtime"
-                          ],
-                          "trust_tier": "verified",
-                          "version": "1.0.0"
-                        }
-                      }
-                    ],
-                    "overlaps_with": [
-                      {
-                        "selector": {
-                          "markers": [],
-                          "slug": "python.format",
-                          "version": "1.0.0"
-                        }
-                      }
-                    ]
-                  },
-                  "slug": "python.lint",
-                  "trust_tier": "internal",
-                  "version": "1.2.3",
-                  "version_checksum": {
-                    "algorithm": "sha256",
-                    "digest": "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/SkillVersionResponse"
-                }
-              }
-            },
-            "description": "Exact immutable skill version metadata returned successfully."
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": {
-                    "code": "SKILL_VERSION_NOT_FOUND",
-                    "details": {
-                      "slug": "python.lint",
-                      "version": "9.9.9"
-                    },
-                    "message": "Skill version not found: python.lint@9.9.9"
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "The requested immutable `slug@version` does not exist."
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": {
-                    "code": "INVALID_REQUEST",
-                    "details": {
-                      "errors": [
-                        {
-                          "input": "latest",
-                          "loc": [
-                            "path",
-                            "version"
-                          ],
-                          "msg": "String should match pattern",
-                          "type": "string_pattern_mismatch"
-                        }
-                      ]
-                    },
-                    "message": "Request validation failed."
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "The request body or path parameters are invalid."
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Fetch exact immutable version metadata",
-        "tags": [
-          "fetch"
-        ]
-      }
-    },
-    "/skills/{slug}/versions/{version}/content": {
-      "get": {
-        "description": "Return the canonical markdown body for one exact immutable skill version with immutable cache headers.",
-        "operationId": "getExactSkillVersionContent",
-        "parameters": [
-          {
-            "description": "Stable public slug of the skill to fetch.",
-            "in": "path",
-            "name": "slug",
-            "required": true,
-            "schema": {
-              "description": "Stable public slug of the skill to fetch.",
-              "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,127})$",
-              "title": "Slug",
-              "type": "string"
-            }
-          },
-          {
-            "description": "Exact immutable semantic version to fetch.",
-            "in": "path",
-            "name": "version",
-            "required": true,
-            "schema": {
-              "description": "Exact immutable semantic version to fetch.",
-              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
-              "title": "Version",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              },
-              "text/markdown": {}
-            },
-            "description": "Markdown content returned successfully."
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": {
-                    "code": "SKILL_VERSION_NOT_FOUND",
-                    "details": {
-                      "slug": "python.lint",
-                      "version": "9.9.9"
-                    },
-                    "message": "Skill version not found: python.lint@9.9.9"
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "The requested immutable `slug@version` does not exist."
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": {
-                    "code": "INVALID_REQUEST",
-                    "details": {
-                      "errors": [
-                        {
-                          "input": "latest",
-                          "loc": [
-                            "path",
-                            "version"
-                          ],
-                          "msg": "String should match pattern",
-                          "type": "string_pattern_mismatch"
-                        }
-                      ]
-                    },
-                    "message": "Request validation failed."
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "The request body or path parameters are invalid."
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Fetch exact immutable markdown content",
-        "tags": [
-          "fetch"
         ]
       }
     },

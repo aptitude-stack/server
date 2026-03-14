@@ -1,13 +1,13 @@
 $kind: http-request
-order: 4000
+order: 7000
 
 method: GET
-url: '{{baseUrl}}/skills/{{invalid_slug}}/versions'
+url: '{{baseUrl}}/resolution/{{negative_missing_slug}}/{{invalid_version}}'
 
 headers:
   - key: Accept
     value: application/json
-    description: Expect request validation to reject the invalid skill slug
+    description: Expect request validation to reject the invalid semantic version
 
 scripts:
   - type: afterResponse
@@ -19,18 +19,16 @@ scripts:
         pm.response.to.have.status(422);
       });
 
-      pm.test('Invalid slug returns the normalized validation envelope', () => {
+      pm.test('Invalid resolution version returns the normalized validation envelope', () => {
         pm.expect(json.error.code).to.eql('INVALID_REQUEST');
         pm.expect(
           json.error.details.errors.some(
             (item) =>
               Array.isArray(item.loc) &&
               item.loc.includes('path') &&
-              item.loc.includes('slug'),
+              item.loc.includes('version'),
           ),
         ).to.eql(true);
       });
 
-      pm.execution.setNextRequest(
-        pm.response.code === 422 ? 'Fetch Missing Skill Version Metadata' : null,
-      );
+      pm.execution.setNextRequest(pm.response.code === 422 ? 'Resolve Missing Skill Version' : null);

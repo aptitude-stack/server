@@ -83,7 +83,10 @@ scripts:
         pm.expect(json.slug).to.eql(pm.collectionVariables.get('sanity_primary_slug'));
         pm.expect(json.version).to.eql(pm.collectionVariables.get('sanity_version_2'));
         pm.expect(json.metadata.name).to.eql('Postman Primary Skill');
-        pm.expect(json.relationships.depends_on).to.have.length(1);
+        pm.expect(json).to.not.have.property('relationships');
+        pm.expect(json).to.not.have.property('content_download_path');
       });
 
-      pm.execution.setNextRequest(pm.response.code === 201 ? 'Get Published Skill Identity' : null);
+      pm.execution.setNextRequest(
+        pm.response.code === 201 ? 'Batch Fetch Published Skill Metadata' : null,
+      );

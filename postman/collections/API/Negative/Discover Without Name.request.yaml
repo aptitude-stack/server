@@ -1,23 +1,21 @@
 $kind: http-request
-order: 9000
+order: 6000
 
 method: POST
-url: '{{baseUrl}}/resolution/relationships:batch'
+url: '{{baseUrl}}/discovery'
 
 headers:
   - key: Accept
     value: application/json
-    description: Expect request validation to reject an empty coordinate list
+    description: Expect discovery validation to reject a missing required name
   - key: Content-Type
     value: application/json
-    description: Send an invalid relationship batch request body
+    description: Send an invalid discovery request body
 
 body:
   type: json
   content: |-
-    {
-      "coordinates": []
-    }
+    {}
 
 scripts:
   - type: afterResponse
@@ -29,18 +27,16 @@ scripts:
         pm.response.to.have.status(422);
       });
 
-      pm.test('Invalid relationship batch returns the normalized validation envelope', () => {
+      pm.test('Missing discovery name returns the normalized API error envelope', () => {
         pm.expect(json.error.code).to.eql('INVALID_REQUEST');
         pm.expect(
           json.error.details.errors.some(
             (item) =>
               Array.isArray(item.loc) &&
               item.loc.includes('body') &&
-              item.loc.includes('coordinates'),
+              item.loc.includes('name'),
           ),
         ).to.eql(true);
       });
 
-      pm.execution.setNextRequest(
-        pm.response.code === 422 ? 'Batch Relationships Not Found' : null,
-      );
+      pm.execution.setNextRequest(pm.response.code === 422 ? 'Resolve Invalid Version' : null);

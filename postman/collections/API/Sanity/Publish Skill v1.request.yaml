@@ -83,9 +83,8 @@ scripts:
         pm.expect(json.slug).to.eql(pm.collectionVariables.get('sanity_primary_slug'));
         pm.expect(json.version).to.eql(pm.collectionVariables.get('sanity_version_1'));
         pm.expect(json.version_checksum.algorithm).to.eql('sha256');
-        pm.expect(json.content_download_path).to.eql(
-          `/skills/${pm.collectionVariables.get('sanity_primary_slug')}/versions/${pm.collectionVariables.get('sanity_version_1')}/content`,
-        );
+        pm.expect(json).to.not.have.property('content_download_path');
+        pm.expect(json).to.not.have.property('relationships');
       });
 
       pm.execution.setNextRequest(pm.response.code === 201 ? 'Publish Skill v2' : null);

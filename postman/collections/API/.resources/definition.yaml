@@ -8,8 +8,8 @@ name: API
 description: |-
   Collection for validating the current Aptitude Skills API.
 
-    - Sanity: covers every public endpoint on the healthy path
-    - Negative: covers deterministic validation, duplicate, not-found, and not-found-style responses
+    - Sanity: covers the hard-cut publish, batch fetch, discovery, and resolution happy path
+    - Negative: covers deterministic validation, duplicate, not-found, and batch not_found responses
 
   Note: `/readyz` exposes a 503 branch only when the runtime is unhealthy, so the collection
   asserts the healthy `200 ready` path by default.
