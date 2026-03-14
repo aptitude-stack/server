@@ -58,14 +58,14 @@ The server does not perform client/runtime concerns from the PRD:
 ## Storage Strategy
 
 The current implementation follows the recommendation in
-[`docs/storage-strategy-report.md`](docs/storage-strategy.md):
+[`docs/storage-strategy.md`](docs/storage-strategy.md):
 
 - PostgreSQL is the only persistence system.
 - Discovery metadata and exact-fetch content are separated at the schema and query-path level.
 - Immutable markdown content is stored once per digest and reused across versions.
 - Version rows bind immutably to digest-addressed content.
 
-This matches the current workload assumptions from the report: skill bodies are small
+This matches the current workload assumptions from the storage strategy doc: skill bodies are small
 (`4-6 KB` on average), fetched as whole documents, and discovery plus exact fetch should stay
 independently optimizable without introducing filesystem or object storage complexity.
 
