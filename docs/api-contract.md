@@ -1,48 +1,37 @@
 # API Contract
 
-This document describes the current public HTTP contract implemented by `aptitude-server`.
-It is a human-readable companion to the pinned OpenAPI artifact at
+Human-readable summary of the public HTTP API implemented by `aptitude-server`.
+The pinned machine-readable source remains
 [`docs/openapi/repository-api-v1.json`](./openapi/repository-api-v1.json).
 
-## Scope
+## Boundary
 
-The API is registry-first and intentionally narrow:
+This API is intentionally registry-first.
 
-- Server-owned behavior: immutable publish, candidate discovery, exact direct dependency reads, exact immutable fetch, lifecycle governance, and audit.
-- Client-owned behavior: prompt interpretation, reranking, final selection, dependency solving, lock generation, and execution planning.
+- Server-owned: immutable publish, candidate discovery, exact dependency reads, exact immutable fetch, lifecycle governance, and audit.
+- Client-owned: prompt interpretation, reranking, final selection, dependency solving, lock generation, and execution planning.
 
-The public path boundary is:
+Public routes:
 
 - `GET /healthz`
 - `GET /readyz`
+- `POST /skill-versions`
 - `POST /discovery`
 - `GET /resolution/{slug}/{version}`
 - `POST /fetch/metadata:batch`
 - `POST /fetch/content:batch`
-- `POST /skill-versions`
 - `PATCH /skills/{slug}/versions/{version}/status`
 
-## Auth
+## Auth And Errors
 
-Health endpoints do not require authentication.
+- `GET /healthz` and `GET /readyz` are unauthenticated.
+- All other routes require `Authorization: Bearer <token>`.
+- Required scopes:
+  - `read`: discovery, resolution, fetch
+  - `publish`: immutable publish
+  - `admin`: lifecycle updates and admin-only governance behavior
 
-All other endpoints require `Authorization: Bearer <token>`.
-
-The server enforces scopes through the Bearer token:
-
-- `read`: discovery, resolution, and fetch routes
-- `publish`: immutable version publication
-- `admin`: lifecycle status updates and admin-only governance behavior
-
-Auth failures use the standard error envelope with these common codes:
-
-- `AUTHENTICATION_REQUIRED`
-- `INVALID_AUTH_TOKEN`
-- `INSUFFICIENT_SCOPE`
-
-## Error Envelope
-
-All JSON errors use the same shape:
+All JSON errors use:
 
 ```json
 {
@@ -56,31 +45,15 @@ All JSON errors use the same shape:
 }
 ```
 
-Common status patterns:
+Common codes:
 
-- `401`: missing or invalid Bearer token
-- `403`: insufficient scope or governance policy violation
-- `404`: exact immutable coordinate not found
-- `409`: duplicate immutable publish
-- `422`: request validation failure
-- `500`: persistence failure during publish
+- `AUTHENTICATION_REQUIRED`
+- `INVALID_AUTH_TOKEN`
+- `INSUFFICIENT_SCOPE`
+- `SKILL_VERSION_NOT_FOUND`
+- `POLICY_*`
 
-## Contract Summary
-
-| Method | Path | Auth | Success | Purpose |
-| --- | --- | --- | --- | --- |
-| `GET` | `/healthz` | none | `200` | Process liveness probe |
-| `GET` | `/readyz` | none | `200` or `503` | Dependency readiness probe |
-| `POST` | `/skill-versions` | `publish` | `201` | Publish one immutable skill version |
-| `POST` | `/discovery` | `read` | `200` | Return ordered candidate slugs |
-| `GET` | `/resolution/{slug}/{version}` | `read` | `200` | Return authored direct `depends_on` selectors |
-| `POST` | `/fetch/metadata:batch` | `read` | `200` | Return ordered immutable metadata results |
-| `POST` | `/fetch/content:batch` | `read` | `200` | Return ordered immutable markdown parts |
-| `PATCH` | `/skills/{slug}/versions/{version}/status` | `admin` | `200` | Transition immutable lifecycle state |
-
-## Shared Data Shapes
-
-### Coordinate
+## Core Shapes
 
 Exact immutable coordinates use:
 
@@ -90,11 +63,6 @@ Exact immutable coordinates use:
   "version": "1.2.3"
 }
 ```
-
-- `slug`: stable public identifier
-- `version`: exact immutable semantic version
-
-### Metadata Envelope
 
 Publish and metadata batch fetch return the same immutable metadata envelope:
 
@@ -111,13 +79,7 @@ Publish and metadata batch fetch return the same immutable metadata envelope:
   "metadata": {
     "name": "Python Lint",
     "description": "Linting skill",
-    "tags": ["python", "lint"],
-    "headers": {"runtime": "python"},
-    "inputs_schema": {"type": "object"},
-    "outputs_schema": {"type": "object"},
-    "token_estimate": 128,
-    "maturity_score": 0.9,
-    "security_score": 0.95
+    "tags": ["python", "lint"]
   },
   "lifecycle_status": "published",
   "trust_tier": "internal",
@@ -130,110 +92,22 @@ Publish and metadata batch fetch return the same immutable metadata envelope:
 }
 ```
 
-## Endpoints
+## Endpoint Summary
 
-### `GET /healthz`
+| Method | Path | Scope | Success | Notes |
+| --- | --- | --- | --- | --- |
+| `GET` | `/healthz` | none | `200` | Liveness probe |
+| `GET` | `/readyz` | none | `200` or `503` | Dependency readiness probe |
+| `POST` | `/skill-versions` | `publish` | `201` | Publish one immutable `slug@version` |
+| `POST` | `/discovery` | `read` | `200` | Returns ordered candidate `slug` values only |
+| `GET` | `/resolution/{slug}/{version}` | `read` | `200` | Returns direct authored `depends_on` only |
+| `POST` | `/fetch/metadata:batch` | `read` | `200` | Returns ordered immutable metadata results |
+| `POST` | `/fetch/content:batch` | `read` | `200` | Returns ordered markdown as `multipart/mixed` |
+| `PATCH` | `/skills/{slug}/versions/{version}/status` | `admin` | `200` | Transitions lifecycle state |
 
-Returns lightweight liveness.
-
-Success body:
-
-```json
-{
-  "status": "ok",
-  "service": "aptitude-server",
-  "environment": "dev"
-}
-```
-
-### `GET /readyz`
-
-Returns readiness for backing dependencies.
-
-Success body:
-
-```json
-{
-  "status": "ready",
-  "checks": [
-    {
-      "name": "database",
-      "status": "ok",
-      "detail": null
-    }
-  ]
-}
-```
-
-If the service is not ready, the same body shape is returned with HTTP `503` and
-`status: "not_ready"`.
-
-### `POST /skill-versions`
-
-Publishes one immutable `slug@version`.
-
-Request body sections:
-
-- `slug`, `version`: immutable identity
-- `content`: markdown body and optional rendered summary
-- `metadata`: name, description, tags, flexible JSON headers, input/output schemas, and optional ranking fields
-- `governance`: `trust_tier` plus optional provenance
-- `relationships`: authored `depends_on`, `extends`, `conflicts_with`, and `overlaps_with`
-
-Notes:
-
-- `depends_on` items must provide exactly one of `version` or `version_constraint`.
-- `internal` publish requires provenance and `publish` scope.
-- `verified` publish requires provenance and `admin` scope.
-- Successful publish returns the immutable metadata envelope, not embedded relationships or markdown content.
-
-Representative request:
-
-```json
-{
-  "slug": "python.lint",
-  "version": "1.2.3",
-  "content": {
-    "raw_markdown": "# Python Lint\n\nLint Python files consistently.\n",
-    "rendered_summary": "Lint Python files consistently."
-  },
-  "metadata": {
-    "name": "Python Lint",
-    "description": "Linting skill",
-    "tags": ["python", "lint"]
-  },
-  "governance": {
-    "trust_tier": "internal",
-    "provenance": {
-      "repo_url": "https://github.com/example/skills",
-      "commit_sha": "aabbccddeeff00112233445566778899aabbccdd",
-      "tree_path": "skills/python.lint"
-    }
-  },
-  "relationships": {
-    "depends_on": [
-      {
-        "slug": "python.base",
-        "version_constraint": ">=1.0.0,<2.0.0"
-      }
-    ],
-    "extends": [],
-    "conflicts_with": [],
-    "overlaps_with": []
-  }
-}
-```
-
-Notable error codes:
-
-- `DUPLICATE_SKILL_VERSION`
-- `CONTENT_STORAGE_FAILURE`
-- `POLICY_PUBLISH_FORBIDDEN`
-- `POLICY_PROVENANCE_REQUIRED`
+## Route Semantics
 
 ### `POST /discovery`
-
-Returns ordered candidate `slug` values only.
 
 Request:
 
@@ -249,25 +123,19 @@ Response:
 
 ```json
 {
-  "candidates": [
-    "python.lint",
-    "python.format"
-  ]
+  "candidates": ["python.lint", "python.format"]
 }
 ```
 
-Semantics:
+Rules:
 
 - Discovery is candidate generation only.
+- It returns ordered `slug` values, not cards or versions.
 - It does not choose a final candidate.
 - It does not solve dependencies.
-- It does not return versions or non-slug cards.
-- It searches indexed slug, name, description, and tags.
-- With the default policy, discovery returns only `published` versions.
+- Default governance visibility is `published` only.
 
 ### `GET /resolution/{slug}/{version}`
-
-Returns only the authored direct `depends_on` declarations for one exact immutable version.
 
 Response:
 
@@ -286,21 +154,14 @@ Response:
 }
 ```
 
-Semantics:
+Rules:
 
-- Exact read only, not search
-- No recursion
-- No constraint solving
-- No transitive expansion
-- No `extends`, `conflicts_with`, or `overlaps_with` in the public response
-
-Notable error code:
-
-- `SKILL_VERSION_NOT_FOUND`
+- Exact read only, not search.
+- Returns direct authored `depends_on` selectors only.
+- No recursion, solving, or transitive expansion.
+- No `extends`, `conflicts_with`, or `overlaps_with` in the response.
 
 ### `POST /fetch/metadata:batch`
-
-Returns ordered exact metadata results for a list of coordinates.
 
 Request:
 
@@ -313,48 +174,13 @@ Request:
 }
 ```
 
-Response:
-
-```json
-{
-  "results": [
-    {
-      "status": "found",
-      "coordinate": {"slug": "python.lint", "version": "1.2.3"},
-      "item": {
-        "slug": "python.lint",
-        "version": "1.2.3",
-        "metadata": {
-          "name": "Python Lint",
-          "tags": ["python", "lint"]
-        },
-        "lifecycle_status": "published",
-        "trust_tier": "internal",
-        "published_at": "2026-03-10T08:30:00Z"
-      }
-    },
-    {
-      "status": "not_found",
-      "coordinate": {"slug": "python.missing", "version": "9.9.9"},
-      "item": null
-    }
-  ]
-}
-```
-
-Semantics:
-
-- Response order matches request order.
-- Missing coordinates are represented inline as `not_found`.
-- The `item` for `found` entries is the full immutable metadata envelope.
+Response order matches request order. Missing coordinates are returned inline as
+`not_found`.
 
 ### `POST /fetch/content:batch`
 
-Returns markdown content as `multipart/mixed` in request order.
-
-Request body is the same as metadata batch.
-
-Each part always includes:
+Uses the same request body as metadata batch and returns `multipart/mixed`.
+Every part includes:
 
 - `Content-Type: text/markdown; charset=utf-8`
 - `X-Aptitude-Slug`
@@ -363,77 +189,131 @@ Each part always includes:
 
 Found parts also include:
 
-- `ETag`: immutable content digest
+- `ETag`
 - `Cache-Control: public, immutable`
 - `Content-Length`
 
-Semantics:
+### `POST /skill-versions`
 
-- Response order matches request order.
-- Found parts contain UTF-8 markdown bytes.
-- `not_found` parts contain an empty body.
+Publishes one immutable `slug@version` with:
+
+- markdown content
+- structured metadata
+- governance metadata
+- authored relationships
+
+Notes:
+
+- `depends_on` items must provide exactly one of `version` or `version_constraint`.
+- `internal` publish requires provenance.
+- `verified` publish requires provenance and `admin`.
+- Success returns metadata only, not embedded markdown or relationship graphs.
 
 ### `PATCH /skills/{slug}/versions/{version}/status`
 
-Transitions lifecycle state for one immutable version.
+Transitions one immutable version between `published`, `deprecated`, and
+`archived`.
 
-Request:
+Notes:
 
-```json
-{
-  "status": "deprecated",
-  "note": "Superseded by 2.0.0"
-}
-```
-
-Response:
-
-```json
-{
-  "slug": "python.lint",
-  "version": "1.2.3",
-  "status": "deprecated",
-  "trust_tier": "internal",
-  "lifecycle_changed_at": "2026-03-11T09:15:00Z",
-  "is_current_default": true
-}
-```
-
-Semantics:
-
-- Requires `admin` scope.
-- Lifecycle states are `published`, `deprecated`, and `archived`.
-- Exact reads allow `published` and `deprecated` for read callers.
+- Requires `admin`.
+- Read callers can read `published` and `deprecated`.
 - `archived` exact reads are admin-only.
 
-Notable error codes:
+## Discovery, Resolution, And Fetch On The Server
 
-- `SKILL_VERSION_NOT_FOUND`
-- `POLICY_STATUS_TRANSITION_FORBIDDEN`
+The implementation is split into a thin FastAPI interface layer, small core
+services, and one SQLAlchemy repository adapter backed by PostgreSQL.
+
+### Startup Wiring
+
+At startup, [`app/main.py`](../app/main.py) creates a single
+`SQLAlchemySkillRegistryRepository`, a shared `GovernancePolicy`, and three
+read-side services:
+
+- `SkillDiscoveryService`
+- `SkillResolutionService`
+- `SkillFetchService`
+
+Those are stored in `app.state` and injected into route handlers through
+[`app/core/dependencies.py`](../app/core/dependencies.py). The same dependency
+module also authenticates Bearer tokens and turns them into `CallerIdentity`
+objects with `read`, `publish`, or `admin` scopes.
+
+### Discovery Flow
+
+1. [`app/interface/api/discovery.py`](../app/interface/api/discovery.py) validates the request DTO and requires a `read` caller.
+2. The route calls [`app/core/skill_discovery.py`](../app/core/skill_discovery.py), which converts `{name, description, tags}` into a search query.
+3. Discovery reuses [`app/core/skill_search.py`](../app/core/skill_search.py):
+   - normalizes text and tags
+   - resolves lifecycle/trust-tier filters through [`app/core/governance.py`](../app/core/governance.py)
+   - records an audit event
+4. The repository executes ranked SQL against the denormalized
+   `skill_search_documents` table via
+   [`app/persistence/skill_registry_repository.py`](../app/persistence/skill_registry_repository.py)
+   and
+   [`app/persistence/skill_registry_repository_support.py`](../app/persistence/skill_registry_repository_support.py).
+
+In practice, discovery is an indexed search path over normalized slug, name,
+description, tags, lifecycle status, trust tier, publication time, and content
+size. Ranking prefers exact slug match, then exact name match, then text rank,
+tag overlap, usage count, freshness, and smaller content. The SQL also collapses
+multiple versions down to the best candidate per slug before the API returns
+only the ordered slug list.
+
+### Resolution Flow
+
+1. [`app/interface/api/resolution.py`](../app/interface/api/resolution.py) validates `slug` and `version` path params and requires `read`.
+2. [`app/core/skill_resolution.py`](../app/core/skill_resolution.py) performs one exact lookup through the repository's relationship-read port.
+3. The core service enforces exact-read governance for the stored lifecycle status.
+4. The response is built by filtering the stored relationship selectors down to
+   `depends_on` only.
+
+Resolution is deliberately not a solver. The server does not recurse into
+dependencies, choose versions, or expand transitive graphs. It returns the
+authored first-degree selectors exactly enough for a client-side solver to make
+the next decision.
+
+### Fetch Flow
+
+1. [`app/interface/api/fetch.py`](../app/interface/api/fetch.py) validates a batch of exact coordinates and requires `read`.
+2. [`app/core/skill_fetch.py`](../app/core/skill_fetch.py) calls batch repository reads for metadata or content.
+3. The core service checks exact-read governance on every found row.
+4. The service rebuilds results in request order, inserting `not_found` entries
+   where no row exists.
+5. The route serializes:
+   - metadata as JSON envelopes
+   - content as `multipart/mixed` with immutable cache headers and per-part coordinate metadata
+
+The important implementation detail is that persistence reads can return rows in
+database order, but the fetch service reindexes them by `(slug, version)` and
+then reconstructs the response in the caller's original order. That keeps batch
+fetch deterministic and lets `not_found` stay inline instead of becoming a hard
+error for the whole request.
 
 ## Governance Defaults
 
-The built-in default profile currently behaves as follows:
+The built-in default profile currently does this:
 
-- Trust tiers: `untrusted`, `internal`, `verified`
-- Publish requirements:
+- publish:
   - `untrusted`: `publish`
   - `internal`: `publish` plus provenance
   - `verified`: `admin` plus provenance
-- Discovery visibility:
-  - default route behavior: `published`
-  - internal trust tier can still appear if it is published
-- Exact read visibility:
-  - `published`: readable with `read`
-  - `deprecated`: readable with `read`
-  - `archived`: readable with `admin`
+- discovery visibility:
+  - default behavior: `published`
+  - `read` callers may explicitly search `published` and `deprecated`
+  - `admin` may also search `archived`
+- exact reads:
+  - `published`: `read`
+  - `deprecated`: `read`
+  - `archived`: `admin`
 
 ## Canonical Sources
 
-For implementation truth, use:
+Use these as implementation truth:
 
-- [`app/main.py`](../app/main.py) for app metadata and mounted routes
-- [`app/interface/api`](../app/interface/api/README.md) for route intent
-- [`app/interface/dto/skills.py`](../app/interface/dto/skills.py) for request and response DTOs
-- [`app/interface/dto/examples.py`](../app/interface/dto/examples.py) for example payloads
-- [`docs/openapi/repository-api-v1.json`](./openapi/repository-api-v1.json) for the pinned machine-readable contract
+- [`app/main.py`](../app/main.py)
+- [`app/interface/api/README.md`](../app/interface/api/README.md)
+- [`app/interface/dto/skills.py`](../app/interface/dto/skills.py)
+- [`app/interface/dto/examples.py`](../app/interface/dto/examples.py)
+- [`docs/openapi/repository-api-v1.json`](./openapi/repository-api-v1.json)
