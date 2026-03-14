@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
@@ -38,3 +41,28 @@ def test_settings_require_database_url(monkeypatch: pytest.MonkeyPatch) -> None:
 
     with pytest.raises(ValidationError):
         Settings(_env_file=None)
+
+
+@pytest.mark.unit
+def test_settings_load_auth_tokens_from_dotenv_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("AUTH_TOKENS_JSON", raising=False)
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "DATABASE_URL=postgresql+psycopg://postgres:postgres@127.0.0.1:5432/aptitude",
+                f"AUTH_TOKENS_JSON={json.dumps({'reader-token': ['read'], 'publisher-token': ['read', 'publish']})}",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    settings = Settings(_env_file=env_file)
+
+    assert settings.auth_tokens == {
+        "reader-token": ("read",),
+        "publisher-token": ("read", "publish"),
+    }

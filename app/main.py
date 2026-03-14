@@ -73,6 +73,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     reset_settings_cache()
     settings = get_settings()
     configure_logging(settings.log_level)
+    if settings.auth_tokens:
+        logger.info("loaded %d auth token(s) from settings", len(settings.auth_tokens))
+    else:
+        logger.warning(
+            "no auth tokens configured; authenticated endpoints will reject all bearer tokens"
+        )
     init_engine(settings.database_url)
     session_factory = get_session_factory()
     registry_repository = SQLAlchemySkillRegistryRepository(session_factory=session_factory)
