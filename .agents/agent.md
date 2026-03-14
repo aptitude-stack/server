@@ -5,6 +5,18 @@ Aptitude is a Python-based, execution-agnostic registry server for immutable
 skills with deterministic dependency metadata contracts, explicit relationships,
 policy governance, and auditable outcomes.
 
+## Entry Point
+
+Use this file as the main agent-facing entrypoint for:
+
+- workflow
+- methodology
+- collaboration expectations
+- documentation preferences
+
+Strict project rules and approval gates remain centralized in
+[`rules/repo.md`](rules/repo.md).
+
 ## Source and Instruction Files
 1. Product and architecture intent: [`docs/overview.md`](../docs/overview.md)
 2. Server/Resolver boundary contract: [`docs/scope.md`](../docs/scope.md)
