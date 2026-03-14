@@ -11,3 +11,6 @@ echo   Stop: Ctrl+C
 echo.
 
 uv run python -m app.main
+set "EXIT_CODE=%ERRORLEVEL%"
+
+endlocal & exit /b %EXIT_CODE%
