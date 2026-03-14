@@ -36,6 +36,62 @@ Strict project rules and approval gates remain centralized in
 
 If rules conflict, follow the highest item unless the server includes a newer explicit architecture decision.
 
+## Relevant Paths for Task Execution
+
+Use these paths when gathering context and executing work.
+
+### Core Code Paths
+
+- `app/main.py`: composition root and app wiring
+- `app/interface/`: FastAPI routes, DTOs, API helpers, error mapping
+- `app/core/`: domain services, ports, governance, fetch, discovery, resolution
+- `app/intelligence/`: pure ranking and search support logic
+- `app/persistence/`: SQLAlchemy models, repository adapters, persistence helpers
+- `app/audit/`: audit storage and audit-facing logic
+
+### Verification and Tooling Paths
+
+- `tests/unit/`: unit coverage for pure logic and service behavior
+- `tests/integration/`: integration coverage for API, repository, and migrations
+- `tests/resources/`: test payloads and fixture resources
+- `alembic/versions/`: schema migration history
+- `scripts/`: repo scripts and maintenance utilities
+- `postman/collections/`: executable API request coverage and examples
+- `postman/environments/`: Postman environments for local/manual validation
+- `.github/workflows/`: CI expectations and command patterns
+
+### Planning and Memory Paths
+
+- `plans/roadmap.md`: sequencing and milestone order
+- `plans/XX-*.md`: active milestone plan files
+- `memory/meta.md`: stable project facts worth preserving across tasks
+
+## Task-to-Doc Map
+
+Use the smallest relevant set of docs for the task at hand.
+
+### Architecture and Scope
+
+- [`docs/overview.md`](../docs/overview.md): product intent and system framing
+- [`docs/scope.md`](../docs/scope.md): server vs client boundary and ownership
+- [`docs/prd.md`](../docs/prd.md): requirements and acceptance-level product constraints
+
+### API and Contract Work
+
+- [`docs/api-contract.md`](../docs/api-contract.md): route behavior and public request/response contract
+- `docs/openapi/` artifacts, when present: committed OpenAPI outputs for drift checks
+- `postman/collections/`: concrete request examples and manual validation flows
+
+### Persistence and Discovery
+
+- [`docs/schema.md`](../docs/schema.md): canonical schema shape and table responsibilities
+- [`docs/storage-strategy.md`](../docs/storage-strategy.md): storage design decisions and tradeoffs
+- [`docs/discovery-candidate-selection.md`](../docs/discovery-candidate-selection.md): discovery matching, filtering, ranking, and per-slug collapse
+
+### Delivery History
+
+- `docs/changelog/`: prior milestone delivery notes and architectural decisions already implemented
+
 ## Collaboration and Learning
 - Keep Yonatan involved in non-trivial design and implementation decisions.
 - Teach while building: explain relevant Python/FastAPI/backend concepts and
@@ -77,6 +133,7 @@ Use this flow for large or cross-cutting changes, not only for net-new features.
 ## Documentation Preferences
 
 - Keep docs concise, concrete, and synced with behavior.
+- Before changing behavior, read the smallest relevant doc set from the task-to-doc map above.
 - Update these files when relevant behavior changes:
   - `plans/plan-XX-*.md` for milestone scope or acceptance updates
   - `plans/roadmap.md` for sequencing changes
