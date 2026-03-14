@@ -1,26 +1,46 @@
-"""Immutable skill version model."""
+"""Normalized immutable skill version model."""
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, Text, UniqueConstraint, func
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import (
+    BigInteger,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.persistence.models.base import Base
 
 if TYPE_CHECKING:
     from app.persistence.models.skill import Skill
-    from app.persistence.models.skill_version_checksum import SkillVersionChecksum
+    from app.persistence.models.skill_content import SkillContent
+    from app.persistence.models.skill_metadata import SkillMetadata
+    from app.persistence.models.skill_relationship_selector import SkillRelationshipSelector
 
 
 class SkillVersion(Base):
-    """Represents immutable `skill@version` metadata."""
+    """Represents one immutable published version bound to normalized content and metadata."""
 
     __tablename__ = "skill_versions"
     __table_args__ = (
+        CheckConstraint(
+            "lifecycle_status IN ('published', 'deprecated', 'archived')",
+            name="ck_skill_versions_lifecycle_status",
+        ),
+        CheckConstraint(
+            "trust_tier IN ('untrusted', 'internal', 'verified')",
+            name="ck_skill_versions_trust_tier",
+        ),
         UniqueConstraint("skill_fk", "version", name="uq_skill_versions_skill_fk_version"),
         Index(
             "ix_skill_versions_skill_fk_published_at_id",
@@ -39,18 +59,56 @@ class SkillVersion(Base):
         index=True,
     )
     version: Mapped[str] = mapped_column(Text, nullable=False)
-    manifest_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
-    artifact_rel_path: Mapped[str] = mapped_column(Text, nullable=False)
-    artifact_size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    content_fk: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("skill_contents.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    metadata_fk: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("skill_metadata.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    checksum_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    lifecycle_status: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        server_default=text("'published'"),
+    )
+    lifecycle_changed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    trust_tier: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        server_default=text("'untrusted'"),
+    )
+    provenance_repo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provenance_commit_sha: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provenance_tree_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
     published_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
     )
 
-    skill: Mapped[Skill] = relationship(back_populates="versions")
-    checksum: Mapped[SkillVersionChecksum] = relationship(
-        back_populates="skill_version",
-        uselist=False,
+    skill: Mapped[Skill] = relationship(
+        back_populates="versions",
+        foreign_keys=[skill_fk],
+    )
+    content: Mapped[SkillContent] = relationship()
+    metadata_row: Mapped[SkillMetadata] = relationship()
+    relationship_selectors: Mapped[list[SkillRelationshipSelector]] = relationship(
         cascade="all, delete-orphan",
+        order_by="SkillRelationshipSelector.ordinal",
+        back_populates="skill_version",
     )

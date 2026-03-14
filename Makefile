@@ -1,13 +1,16 @@
 UV ?= UV_CACHE_DIR=.uv-cache uv
+DOCKER_IMAGE ?= y0ncha/aptitude-server
+DOCKER_TAG ?= latest
+DOCKER_IMAGE_REF := $(DOCKER_IMAGE):$(DOCKER_TAG)
 
-.PHONY: run debug test lint format typecheck migrate-up migrate-down db-up db-down
+.PHONY: run debug test lint format typecheck migrate-up migrate-down db-up db-down docker-build docker-push docker-build-push
 
 run:
 	@printf "\033[1;36m==>\033[0m \033[1mStarting FastAPI dev server\033[0m\n"
 	@printf "\033[0;36m    API:\033[0m  http://127.0.0.1:8000\n"
 	@printf "\033[0;36m   Docs:\033[0m  http://127.0.0.1:8000/docs\n"
 	@printf "\033[0;36m   Stop:\033[0m  Ctrl+C\n\n"
-	@$(UV) run python main.py
+	@UVICORN_RELOAD=true $(UV) run python -m app.main
 
 debug:
 	@printf "\033[1;36m==>\033[0m \033[1mStarting FastAPI dev server in debug mode\033[0m\n"
@@ -15,7 +18,7 @@ debug:
 	@printf "\033[0;36m   Docs:\033[0m  http://127.0.0.1:8000/docs\n"
 	@printf "\033[0;36m  Level:\033[0m  DEBUG\n"
 	@printf "\033[0;36m   Stop:\033[0m  Ctrl+C\n\n"
-	LOG_LEVEL=DEBUG UVICORN_RELOAD=false uv run python main.py
+	@LOG_LEVEL=DEBUG UVICORN_RELOAD=false $(UV) run python -m app.main
 
 test:
 	$(UV) run --extra dev pytest
@@ -40,3 +43,11 @@ db-up:
 
 db-down:
 	docker compose down -v
+
+docker-build:
+	docker build -t $(DOCKER_IMAGE_REF) .
+
+docker-push:
+	docker push $(DOCKER_IMAGE_REF)
+
+docker-build-push: docker-build docker-push

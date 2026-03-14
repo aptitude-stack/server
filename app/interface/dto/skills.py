@@ -1,154 +1,148 @@
-"""Skill registry DTOs and validation constants."""
+"""Public request and response DTOs for skill APIs."""
 
 from __future__ import annotations
 
-import re
 from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-# Core semantic-version regex used both in request validation and path params.
-# It accepts MAJOR.MINOR.PATCH plus optional prerelease/build metadata.
-SEMVER_CORE = (
-    r"(0|[1-9]\d*)\."
-    r"(0|[1-9]\d*)\."
-    r"(0|[1-9]\d*)"
-    r"(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?"
-    r"(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?"
-)
-SEMVER_PATTERN = rf"^{SEMVER_CORE}$"
-
-# Public skill identifiers are intentionally conservative and stable:
-# - must start with an alphanumeric character
-# - may then include letters, numbers, ".", "_", or "-"
-# - capped at 128 characters
-SKILL_ID_PATTERN = r"^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,127})$"
-
-# Dependency constraints allow one or more comma-separated semver comparators,
-# for example: ">=1.0.0,<2.0.0".
-VERSION_CONSTRAINT_PATTERN = re.compile(
-    rf"^\s*(?:==|=|!=|>=|<=|>|<)\s*{SEMVER_CORE}\s*"
-    rf"(?:,\s*(?:==|=|!=|>=|<=|>|<)\s*{SEMVER_CORE}\s*)*$"
+from app.core.governance import LifecycleStatus, TrustTier
+from app.interface.validation import (
+    MARKER_PATTERN,
+    SEMVER_PATTERN,
+    SLUG_PATTERN,
+    VERSION_CONSTRAINT_PATTERN,
 )
 
-# Execution markers are preserved as authored, but constrained to a small token
-# grammar so they remain safe and deterministic to store and compare.
-MARKER_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$")
+
+def _normalize_unique_tags(value: list[str]) -> list[str]:
+    seen: set[str] = set()
+    normalized: list[str] = []
+    for item in value:
+        tag = item.strip()
+        if not tag or tag in seen:
+            continue
+        seen.add(tag)
+        normalized.append(tag)
+    return normalized
 
 
-class RelationshipRef(BaseModel):
-    """Typed manifest reference to another immutable skill version."""
+class DependencySelectorRequest(BaseModel):
+    """Direct dependency selector authored for one version."""
 
-    skill_id: str = Field(
+    slug: str = Field(
         min_length=1,
         max_length=128,
-        pattern=SKILL_ID_PATTERN,
-        description="Stable identifier of the related skill.",
-    )
-    version: str = Field(
-        pattern=SEMVER_PATTERN,
-        description="Exact semantic version of the related immutable skill.",
-    )
-
-    model_config = ConfigDict(extra="forbid")
-
-
-class DependencyDeclaration(BaseModel):
-    """Direct dependency contract authored for a specific immutable version."""
-
-    skill_id: str = Field(
-        min_length=1,
-        max_length=128,
-        pattern=SKILL_ID_PATTERN,
-        description="Stable identifier of the dependency skill.",
+        pattern=SLUG_PATTERN,
+        description="Stable public slug of the dependency skill.",
     )
     version: str | None = Field(
         default=None,
         pattern=SEMVER_PATTERN,
-        description=(
-            "Exact immutable dependency version. Mutually exclusive with `version_constraint`."
-        ),
+        description="Exact immutable dependency version.",
     )
     version_constraint: str | None = Field(
         default=None,
         min_length=1,
         max_length=200,
-        description=(
-            "Comma-separated semver comparators, for example `>=1.0.0,<2.0.0`. "
-            "Mutually exclusive with `version`."
-        ),
+        description="Comma-separated semver comparators.",
     )
     optional: bool | None = Field(
         default=None,
         description="Whether consumers may omit this dependency at runtime.",
     )
-    markers: list[str] | None = Field(
-        default=None,
-        description="Execution markers preserved exactly as authored in the manifest.",
+    markers: list[str] = Field(
+        default_factory=list,
+        description="Execution markers preserved exactly as authored.",
     )
 
     model_config = ConfigDict(extra="forbid")
 
     @field_validator("markers")
     @classmethod
-    def validate_markers(cls, value: list[str] | None) -> list[str] | None:
-        """Validate authored marker tokens."""
-        if value is None:
-            return None
-
+    def validate_markers(cls, value: list[str]) -> list[str]:
         for marker in value:
             if MARKER_PATTERN.fullmatch(marker) is None:
                 raise ValueError(
-                    "Dependency declaration markers must be non-empty tokens "
-                    "containing only letters, numbers, '.', '_', ':', or '-'."
+                    "Dependency markers must contain only letters, numbers, '.', '_', ':', or '-'."
                 )
-
         return value
 
     @model_validator(mode="after")
-    def validate_version_selector(self) -> DependencyDeclaration:
-        """Ensure the dependency uses exactly one version-selection strategy."""
+    def validate_version_selector(self) -> DependencySelectorRequest:
         if (self.version is None) == (self.version_constraint is None):
             raise ValueError(
-                "Dependency declaration must include exactly one of `version` "
-                "or `version_constraint`."
+                "Dependency selector must include exactly one of `version` or `version_constraint`."
             )
-
         if self.version_constraint is not None:
             if VERSION_CONSTRAINT_PATTERN.fullmatch(self.version_constraint) is None:
                 raise ValueError(
-                    "Dependency declaration `version_constraint` must be a "
-                    "comma-separated list of semver comparators."
+                    "Dependency selector `version_constraint` must be a comma-separated list "
+                    "of semver comparators."
                 )
-
         return self
 
 
-class SkillManifest(BaseModel):
-    """Validated immutable skill manifest contract."""
+class DependencySelectorResponse(BaseModel):
+    """Direct dependency selector returned by resolution."""
 
-    schema_version: str = Field(
-        default="1.0",
-        min_length=1,
-        max_length=20,
-        description="Manifest schema version understood by this API.",
-    )
-    skill_id: str = Field(
+    slug: str = Field(
         min_length=1,
         max_length=128,
-        pattern=SKILL_ID_PATTERN,
-        description="Stable catalog identifier for the skill.",
+        pattern=SLUG_PATTERN,
+        description="Stable public slug of the dependency skill.",
+    )
+    version: str | None = Field(
+        default=None,
+        pattern=SEMVER_PATTERN,
+        description="Exact immutable dependency version.",
+    )
+    version_constraint: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=200,
+        description="Comma-separated semver comparators.",
+    )
+    optional: bool | None = Field(default=None)
+    markers: list[str] = Field(default_factory=list)
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class ExactRelationshipSelectorRequest(BaseModel):
+    """Exact immutable relationship selector for non-dependency edges."""
+
+    slug: str = Field(
+        min_length=1,
+        max_length=128,
+        pattern=SLUG_PATTERN,
+        description="Stable public slug of the related skill.",
     )
     version: str = Field(
         pattern=SEMVER_PATTERN,
-        description="Immutable semantic version being published or fetched.",
+        description="Exact immutable semantic version of the related skill.",
     )
-    name: str = Field(
-        min_length=1,
-        max_length=200,
-        description="Human-readable skill name.",
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class SkillVersionContentRequest(BaseModel):
+    """Markdown body provided at publish time."""
+
+    raw_markdown: str = Field(description="Canonical markdown body for this immutable version.")
+    rendered_summary: str | None = Field(
+        default=None,
+        description="Optional pre-rendered short summary stored alongside the markdown.",
     )
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class SkillVersionMetadataRequest(BaseModel):
+    """Structured query metadata provided at publish time."""
+
+    name: str = Field(min_length=1, max_length=200, description="Human-readable skill name.")
     description: str | None = Field(
         default=None,
         description="Optional human-readable summary of the skill.",
@@ -157,97 +151,210 @@ class SkillManifest(BaseModel):
         default_factory=list,
         description="Free-form tags used for categorization and discovery.",
     )
-    depends_on: list[DependencyDeclaration] | None = Field(
+    headers: dict[str, Any] | None = Field(
         default=None,
-        description="Direct dependency declarations authored for this immutable version.",
+        description="Flexible header-like attributes stored as JSON.",
     )
-    extends: list[RelationshipRef] | None = Field(
+    inputs_schema: dict[str, Any] | None = Field(
         default=None,
-        description="Other immutable skill versions this version extends.",
+        description="Structured input contract stored as JSON.",
     )
-    conflicts_with: list[RelationshipRef] | None = Field(
+    outputs_schema: dict[str, Any] | None = Field(
         default=None,
-        description="Immutable skill versions known to conflict with this version.",
+        description="Structured output contract stored as JSON.",
     )
-    overlaps_with: list[RelationshipRef] | None = Field(
+    token_estimate: int | None = Field(
         default=None,
-        description="Immutable skill versions with overlapping behavior or scope.",
+        ge=0,
+        description="Approximate token footprint for ranking/filtering.",
+    )
+    maturity_score: float | None = Field(
+        default=None,
+        ge=0,
+        le=1,
+        description="Normalized maturity score in the range [0, 1].",
+    )
+    security_score: float | None = Field(
+        default=None,
+        ge=0,
+        le=1,
+        description="Normalized security score in the range [0, 1].",
+    )
+
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator("tags")
+    @classmethod
+    def normalize_tags(cls, value: list[str]) -> list[str]:
+        return _normalize_unique_tags(value)
+
+
+class SkillVersionRelationshipsRequest(BaseModel):
+    """Grouped authored relationships provided at publish time."""
+
+    depends_on: list[DependencySelectorRequest] = Field(default_factory=list)
+    extends: list[ExactRelationshipSelectorRequest] = Field(default_factory=list)
+    conflicts_with: list[ExactRelationshipSelectorRequest] = Field(default_factory=list)
+    overlaps_with: list[ExactRelationshipSelectorRequest] = Field(default_factory=list)
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class ProvenanceRequest(BaseModel):
+    """Minimal publish-time provenance metadata."""
+
+    repo_url: str = Field(min_length=1, max_length=500)
+    commit_sha: str = Field(min_length=7, max_length=64, pattern=r"^[0-9A-Fa-f]+$")
+    tree_path: str | None = Field(default=None, min_length=1, max_length=500)
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class SkillGovernanceRequest(BaseModel):
+    """Governance metadata supplied at publish time."""
+
+    trust_tier: TrustTier = "untrusted"
+    provenance: ProvenanceRequest | None = None
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class SkillVersionCreateRequest(BaseModel):
+    """Normalized JSON publish contract."""
+
+    slug: str = Field(
+        min_length=1,
+        max_length=128,
+        pattern=SLUG_PATTERN,
+        description="Stable public slug for the skill identity.",
+    )
+    version: str = Field(
+        pattern=SEMVER_PATTERN,
+        description="Immutable semantic version being published.",
+    )
+    content: SkillVersionContentRequest
+    metadata: SkillVersionMetadataRequest
+    governance: SkillGovernanceRequest = Field(default_factory=SkillGovernanceRequest)
+    relationships: SkillVersionRelationshipsRequest = Field(
+        default_factory=SkillVersionRelationshipsRequest
     )
 
     model_config = ConfigDict(extra="forbid")
 
 
-class ErrorBody(BaseModel):
-    """Error detail object for API error envelope."""
-
-    code: str = Field(description="Stable machine-readable error code.")
-    message: str = Field(description="Human-readable summary of the failure.")
-    details: dict[str, Any] | None = Field(
-        default=None,
-        description="Optional structured metadata to help clients debug the error.",
-    )
-
-
-class ErrorEnvelope(BaseModel):
-    """Standardized error envelope for milestone 02 endpoints."""
-
-    error: ErrorBody = Field(description="Normalized error payload.")
-
-
 class ChecksumResponse(BaseModel):
-    """Checksum metadata attached to a stored artifact."""
+    """Checksum metadata attached to stored content or versions."""
 
-    algorithm: str = Field(description="Checksum algorithm used for the artifact.")
-    digest: str = Field(description="Hex digest of the stored artifact.")
-
-
-class ArtifactMetadataResponse(BaseModel):
-    """Immutable metadata describing where and how large the artifact is."""
-
-    relative_path: str = Field(
-        description="Artifact path relative to the configured artifact root."
-    )
-    size_bytes: int = Field(description="Stored artifact size in bytes.")
+    algorithm: str = Field(description="Checksum algorithm used by the service.")
+    digest: str = Field(description="Hex digest returned by the service.")
 
 
-class SkillVersionDetailResponse(BaseModel):
-    """Metadata returned after a successful publish or fetch."""
+class SkillContentSummaryResponse(BaseModel):
+    """Compact content metadata returned without the full markdown body."""
 
-    skill_id: str = Field(description="Stable identifier of the skill.")
-    version: str = Field(description="Immutable semantic version of the skill.")
-    manifest: SkillManifest = Field(description="Validated manifest as stored by the service.")
-    checksum: ChecksumResponse = Field(description="Checksum metadata for integrity checks.")
-    artifact_metadata: ArtifactMetadataResponse = Field(
-        description="Location and size metadata for the immutable artifact."
-    )
-    published_at: datetime = Field(description="UTC timestamp when the version was published.")
-
-
-class SkillVersionFetchResponse(SkillVersionDetailResponse):
-    """Fetch response that includes the binary artifact encoded for JSON transport."""
-
-    artifact_base64: str = Field(
-        description="Artifact bytes encoded as a base64 ASCII string.",
+    checksum: ChecksumResponse
+    size_bytes: int = Field(description="UTF-8 byte length of the stored markdown.")
+    rendered_summary: str | None = Field(
+        description="Optional pre-rendered short summary stored with the markdown.",
     )
 
 
-class SkillVersionSummaryResponse(BaseModel):
-    """Summary view for one immutable skill version in a list response."""
+class SkillMetadataResponse(BaseModel):
+    """Full normalized metadata block returned by immutable metadata reads."""
 
-    skill_id: str = Field(description="Stable identifier of the skill.")
-    version: str = Field(description="Immutable semantic version of the skill.")
-    manifest: SkillManifest = Field(description="Validated manifest for the listed version.")
-    checksum: ChecksumResponse = Field(description="Checksum metadata for the artifact.")
-    artifact_metadata: ArtifactMetadataResponse = Field(
-        description="Location and size metadata for the immutable artifact."
-    )
-    published_at: datetime = Field(description="UTC timestamp when the version was published.")
+    name: str
+    description: str | None
+    tags: list[str]
+    headers: dict[str, Any] | None = None
+    inputs_schema: dict[str, Any] | None = None
+    outputs_schema: dict[str, Any] | None = None
+    token_estimate: int | None = None
+    maturity_score: float | None = None
+    security_score: float | None = None
 
 
-class SkillVersionListResponse(BaseModel):
-    """List of all known immutable versions for a skill."""
+class ProvenanceResponse(BaseModel):
+    """Minimal provenance returned by immutable version reads."""
 
-    skill_id: str = Field(description="Stable identifier of the skill.")
-    versions: list[SkillVersionSummaryResponse] = Field(
-        description="Published versions in deterministic reverse chronological order.",
-    )
+    repo_url: str
+    commit_sha: str
+    tree_path: str | None = None
+
+
+class SkillVersionMetadataResponse(BaseModel):
+    """Immutable metadata envelope returned by publish and exact metadata fetch."""
+
+    slug: str
+    version: str
+    version_checksum: ChecksumResponse
+    content: SkillContentSummaryResponse
+    metadata: SkillMetadataResponse
+    lifecycle_status: LifecycleStatus
+    trust_tier: TrustTier
+    provenance: ProvenanceResponse | None = None
+    published_at: datetime
+
+
+class SkillDiscoveryRequest(BaseModel):
+    """Body-based discovery request."""
+
+    name: str = Field(min_length=1, max_length=200)
+    description: str | None = None
+    tags: list[str] = Field(default_factory=list)
+
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Discovery `name` must not be blank.")
+        return normalized
+
+    @field_validator("description")
+    @classmethod
+    def normalize_description(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+    @field_validator("tags")
+    @classmethod
+    def normalize_discovery_tags(cls, value: list[str]) -> list[str]:
+        return _normalize_unique_tags(value)
+
+
+class SkillDiscoveryResponse(BaseModel):
+    """Ordered candidate slugs returned by discovery."""
+
+    candidates: list[str]
+
+
+class SkillDependencyResolutionResponse(BaseModel):
+    """Exact direct dependency declarations for one immutable version."""
+
+    slug: str
+    version: str
+    depends_on: list[DependencySelectorResponse]
+
+
+class SkillVersionStatusUpdateRequest(BaseModel):
+    """Lifecycle transition request for one immutable version."""
+
+    status: LifecycleStatus
+    note: str | None = Field(default=None, max_length=1000)
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class SkillVersionStatusResponse(BaseModel):
+    """Lifecycle status update response."""
+
+    slug: str
+    version: str
+    status: LifecycleStatus
+    trust_tier: TrustTier
+    lifecycle_changed_at: datetime
+    is_current_default: bool

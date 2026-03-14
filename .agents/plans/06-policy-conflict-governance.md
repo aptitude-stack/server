@@ -1,7 +1,7 @@
 # Plan 06 — Policy, Conflict, and Governance
 
 ## Goal
-Enforce centralized governance for trust tiers, lifecycle transitions, and conflict/overlap metadata at publish and discovery boundaries.
+Enforce centralized governance for trust tiers, lifecycle transitions, and conflict/overlap metadata at publish and read boundaries over the server's canonical PostgreSQL records.
 
 ## Stack Alignment
 - Runtime: Python 3.12+
@@ -14,13 +14,14 @@ Enforce centralized governance for trust tiers, lifecycle transitions, and confl
 - Add policy profiles controlling publish permissions and discovery visibility.
 - Implement trust-tier gating and provenance requirements.
 - Implement lifecycle transitions (`published`, `deprecated`, `archived`).
-- Keep policy authority in server for publish/read/search visibility; resolver may apply additional runtime policy interpretation after retrieval.
-- Explicitly avoid server-side overlap winner selection and dependency conflict solving.
+- Clean up superseded persistence structures created before the normalized PostgreSQL cutover, including legacy compatibility tables and mirror columns that no longer serve runtime reads.
+- Keep policy authority in the server for publish, exact-read, and discovery visibility over canonical PostgreSQL metadata and digest bindings; clients may apply stricter runtime policy after retrieval.
+- Explicitly avoid server-side overlap winner selection, dependency conflict solving, or any Git-dependent read behavior.
 
 ## Architecture Impact
 - Strengthens policy engine in core domain.
 - Adds governance controls at server interface boundary.
-- Improves enterprise readiness without coupling repository to runtime solver logic.
+- Improves enterprise readiness without coupling the server to client-side selection or solving logic.
 
 ## Deliverables
 - Policy profile schema and loader.
@@ -28,6 +29,7 @@ Enforce centralized governance for trust tiers, lifecycle transitions, and confl
 - Endpoint: `PATCH /v1/skills/{skill_id}/versions/{version}/status`.
 - Trust-tier and lifecycle fields exposed on repository read models.
 - Audit event coverage for policy and lifecycle changes.
+- Cleanup migration plan for legacy persistence artifacts such as `skill_relationship_edges`, `skill_version_checksums`, and compatibility mirror columns retained during migration `0005`.
 - Learning note on policy-as-data and governance boundaries.
 
 ## Acceptance Criteria
@@ -35,10 +37,12 @@ Enforce centralized governance for trust tiers, lifecycle transitions, and confl
 - Deprecated and archived states affect server-side search candidate retrieval and exact-read visibility by documented policy.
 - Trust profile restrictions are enforced on publish and privileged updates.
 - Conflict/overlap metadata is persisted and returned deterministically.
-- No server-side canonical dependency resolution behavior is introduced.
+- Legacy tables and columns replaced by normalized storage are either removed or explicitly documented as temporary compatibility state with an exit path.
+- No server-side final candidate selection, dependency resolution, or Git-backed read dependency is introduced.
 
 ## Test Plan
 - Policy allow/deny scenario tests.
 - Lifecycle transition and visibility tests.
 - Trust-tier validation tests.
+- Migration coverage for dropping or retiring legacy compatibility tables/columns without breaking current publish, fetch, relationship, and discovery paths.
 - Regression tests for deterministic policy reason codes and metadata projection.

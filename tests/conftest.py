@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
+import json
 import os
+from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.core.settings import SETTINGS_ENV_FILE_ENV_VAR
+
 DEFAULT_TEST_DATABASE_URL = "postgresql+psycopg://postgres:postgres@127.0.0.1:5432/aptitude"
+DEFAULT_AUTH_TOKENS = {
+    "reader-token": ["read"],
+    "publisher-token": ["read", "publish"],
+    "admin-token": ["read", "publish", "admin"],
+}
 
 
 def _database_is_available(database_url: str) -> bool:
@@ -23,14 +33,53 @@ def _database_is_available(database_url: str) -> bool:
         engine.dispose()
 
 
+def _reset_database(database_url: str) -> None:
+    """Drop and recreate the public schema for a clean integration DB."""
+    engine = create_engine(database_url, pool_pre_ping=True)
+    try:
+        with engine.begin() as connection:
+            connection.execute(text("DROP SCHEMA IF EXISTS public CASCADE"))
+            connection.execute(text("CREATE SCHEMA public"))
+            connection.execute(text("GRANT ALL ON SCHEMA public TO postgres"))
+            connection.execute(text("GRANT ALL ON SCHEMA public TO public"))
+    finally:
+        engine.dispose()
+
+
 @pytest.fixture(autouse=True)
-def clear_settings_cache() -> None:
+def clear_settings_cache() -> Generator[None, None, None]:
     """Ensure tests never share cached settings state."""
     from app.core.settings import reset_settings_cache
 
     reset_settings_cache()
     yield
     reset_settings_cache()
+
+
+@pytest.fixture(autouse=True)
+def default_auth_tokens(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Provide explicit auth tokens for all tests exercising HTTP routes."""
+    monkeypatch.setenv("AUTH_TOKENS_JSON", json.dumps(DEFAULT_AUTH_TOKENS))
+
+
+@pytest.fixture(autouse=True)
+def dummy_settings_env_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Point settings loading at a test-owned dotenv file."""
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "\n".join(
+            [
+                f"DATABASE_URL={DEFAULT_TEST_DATABASE_URL}",
+                f"AUTH_TOKENS_JSON={json.dumps(DEFAULT_AUTH_TOKENS)}",
+                "APP_ENV=test",
+                "LOG_LEVEL=DEBUG",
+                "APP_NAME=aptitude-test",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv(SETTINGS_ENV_FILE_ENV_VAR, str(env_file))
+    return env_file
 
 
 @pytest.fixture(scope="session")
@@ -48,3 +97,10 @@ def require_integration_database(integration_database_url: str) -> str:
             "Run `make db-up` and set TEST_DATABASE_URL if needed.",
         )
     return integration_database_url
+
+
+@pytest.fixture
+def clean_integration_database(require_integration_database: str) -> str:
+    """Provide a blank Postgres schema for integration tests."""
+    _reset_database(require_integration_database)
+    return require_integration_database

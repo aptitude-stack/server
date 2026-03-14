@@ -3,6 +3,12 @@ values:
   - key: baseUrl
     value: 'http://localhost:8000'
     enabled: true
-  - key: artifactFilePath
-    value: '/Users/yonatan/Dev/Aptitude/aptitude-server/postman/assets/sanity-artifact.md'
+  - key: readToken
+    value: 'reader-token'
+    enabled: true
+  - key: publishToken
+    value: 'publisher-token'
+    enabled: true
+  - key: adminToken
+    value: 'admin-token'
     enabled: true

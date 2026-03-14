@@ -1,4 +1,4 @@
-"""Immutable skill root model."""
+"""Normalized skill identity model."""
 
 from __future__ import annotations
 
@@ -15,19 +15,26 @@ if TYPE_CHECKING:
 
 
 class Skill(Base):
-    """Represents a logical skill identifier."""
+    """Represents a logical skill identity keyed by public slug."""
 
     __tablename__ = "skills"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    skill_id: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    slug: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
         nullable=False,
     )
 
     versions: Mapped[list[SkillVersion]] = relationship(
         back_populates="skill",
         cascade="all, delete-orphan",
+        foreign_keys="SkillVersion.skill_fk",
     )
