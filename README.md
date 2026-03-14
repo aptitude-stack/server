@@ -95,6 +95,7 @@ Notes:
 
 When running locally, interactive docs are available at `http://127.0.0.1:8000/docs`.
 The pinned standalone contract is committed at `docs/openapi/repository-api-v1.json`.
+The human-readable companion is [`docs/api-contract.md`](docs/api-contract.md).
 
 ## Governance and Auth
 

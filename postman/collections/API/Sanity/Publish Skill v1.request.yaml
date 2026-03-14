@@ -11,6 +11,9 @@ headers:
   - key: Content-Type
     value: application/json
     description: Send the normalized JSON publish contract
+  - key: Authorization
+    value: 'Bearer {{publishToken}}'
+    description: Authenticate with a caller that has the `publish` scope
 
 body:
   type: json
@@ -83,6 +86,10 @@ scripts:
         pm.expect(json.slug).to.eql(pm.collectionVariables.get('sanity_primary_slug'));
         pm.expect(json.version).to.eql(pm.collectionVariables.get('sanity_version_1'));
         pm.expect(json.version_checksum.algorithm).to.eql('sha256');
+        pm.expect(json.content.checksum.algorithm).to.eql('sha256');
+        pm.expect(json.lifecycle_status).to.eql('published');
+        pm.expect(json.trust_tier).to.eql('untrusted');
+        pm.expect(json.published_at).to.be.a('string').and.not.empty;
         pm.expect(json).to.not.have.property('content_download_path');
         pm.expect(json).to.not.have.property('relationships');
       });

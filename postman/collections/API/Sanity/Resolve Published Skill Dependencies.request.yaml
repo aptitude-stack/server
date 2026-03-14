@@ -8,6 +8,9 @@ headers:
   - key: Accept
     value: application/json
     description: Request the direct authored dependencies for the published version
+  - key: Authorization
+    value: 'Bearer {{readToken}}'
+    description: Authenticate with a caller that has the `read` scope
 
 scripts:
   - type: afterResponse

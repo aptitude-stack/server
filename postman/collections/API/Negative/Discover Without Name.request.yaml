@@ -11,6 +11,9 @@ headers:
   - key: Content-Type
     value: application/json
     description: Send an invalid discovery request body
+  - key: Authorization
+    value: 'Bearer {{readToken}}'
+    description: Authenticate with a caller that has the `read` scope
 
 body:
   type: json
