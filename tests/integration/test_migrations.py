@@ -48,6 +48,8 @@ def test_migrations_upgrade_and_downgrade(clean_integration_database: str) -> No
             "provenance_repo_url",
             "provenance_commit_sha",
             "provenance_tree_path",
+            "provenance_publisher_identity",
+            "policy_profile_at_publish",
         } <= version_columns
 
         assert {"lifecycle_status", "trust_tier"} <= search_columns

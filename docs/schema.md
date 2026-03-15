@@ -112,6 +112,8 @@ Immutable version rows binding identity, content, and metadata together.
 | `provenance_repo_url` | `text` | nullable | Minimal source repository provenance |
 | `provenance_commit_sha` | `text` | nullable | Commit associated with the published version |
 | `provenance_tree_path` | `text` | nullable | Optional repository subpath for the skill |
+| `provenance_publisher_identity` | `text` | nullable | Advisory publisher/CI identity collected at publish time |
+| `policy_profile_at_publish` | `text` | nullable | Server-derived policy profile snapshot for advisory trust context |
 | `created_at` | `timestamptz` | `NOT NULL`, server default | Insert time |
 | `published_at` | `timestamptz` | `NOT NULL`, server default | Publish timestamp |
 
@@ -125,6 +127,7 @@ Constraints and indexes:
 Immutability rule:
 
 - lifecycle and trust are version-scoped governance state
+- provenance is advisory publish-time metadata collected by the publisher client and validated/persisted by the server
 - any body or metadata change creates a new `skill_versions` row
 - default-version selection is derived from canonical version ordering when needed and is not stored on `skills`
 

@@ -26,6 +26,7 @@ PUBLISH_REQUEST_EXAMPLE = {
             "repo_url": "https://github.com/example/skills",
             "commit_sha": "aabbccddeeff00112233445566778899aabbccdd",
             "tree_path": "skills/python.lint",
+            "publisher_identity": "ci/acme-release",
         },
     },
     "relationships": {
@@ -74,6 +75,11 @@ SKILL_VERSION_METADATA_RESPONSE_EXAMPLE = {
         "repo_url": "https://github.com/example/skills",
         "commit_sha": "aabbccddeeff00112233445566778899aabbccdd",
         "tree_path": "skills/python.lint",
+        "publisher_identity": "ci/acme-release",
+        "trust_context": {
+            "trust_tier": "internal",
+            "policy_profile": "default",
+        },
     },
     "published_at": "2026-03-10T08:30:00Z",
 }

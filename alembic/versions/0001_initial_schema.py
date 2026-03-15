@@ -109,6 +109,8 @@ def upgrade() -> None:
         sa.Column("provenance_repo_url", sa.Text(), nullable=True),
         sa.Column("provenance_commit_sha", sa.Text(), nullable=True),
         sa.Column("provenance_tree_path", sa.Text(), nullable=True),
+        sa.Column("provenance_publisher_identity", sa.Text(), nullable=True),
+        sa.Column("policy_profile_at_publish", sa.Text(), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),

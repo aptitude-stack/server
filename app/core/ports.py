@@ -17,6 +17,14 @@ RelationshipEdgeType = Literal[
 
 
 @dataclass(frozen=True, slots=True)
+class AuditEventRecord:
+    """One structured audit event produced by the core layer."""
+
+    event_type: str
+    payload: dict[str, Any] | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ExactSkillCoordinate:
     """Exact immutable skill-version selector used by read paths."""
 
@@ -205,7 +213,12 @@ class SkillRegistryPort(Protocol):
     def version_exists(self, *, slug: str, version: str) -> bool:
         """Return whether a skill version already exists."""
 
-    def create_version(self, *, record: CreateSkillVersionRecord) -> StoredSkillVersion:
+    def create_version(
+        self,
+        *,
+        record: CreateSkillVersionRecord,
+        audit_events: tuple[AuditEventRecord, ...] = (),
+    ) -> StoredSkillVersion:
         """Create one immutable normalized version."""
 
     def get_version(self, *, slug: str, version: str) -> StoredSkillVersion | None:
@@ -217,6 +230,7 @@ class SkillRegistryPort(Protocol):
         slug: str,
         version: str,
         lifecycle_status: LifecycleStatus,
+        audit_events: tuple[AuditEventRecord, ...] = (),
     ) -> StoredSkillVersionStatus | None:
         """Update lifecycle state for one immutable version and return the new projection."""
 

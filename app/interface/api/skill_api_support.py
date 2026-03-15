@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from app.core.governance import TrustTier
 from app.core.skill_models import (
     CreateSkillVersionCommand,
     ProvenanceMetadata,
@@ -34,6 +35,7 @@ from app.interface.dto.skills import (
     SkillVersionCreateRequest,
     SkillVersionMetadataResponse,
     SkillVersionStatusResponse,
+    TrustContextResponse,
 )
 
 
@@ -93,7 +95,7 @@ def to_metadata_response(detail: SkillVersionDetail) -> SkillVersionMetadataResp
         metadata=_metadata_response(detail.metadata),
         lifecycle_status=detail.lifecycle_status,
         trust_tier=detail.trust_tier,
-        provenance=_provenance_response(detail.provenance),
+        provenance=_provenance_response(detail.provenance, trust_tier=detail.trust_tier),
         published_at=detail.published_at,
     )
 
@@ -154,6 +156,7 @@ def _governance_input(item: SkillGovernanceRequest) -> SkillGovernanceInput:
                 repo_url=item.provenance.repo_url,
                 commit_sha=item.provenance.commit_sha,
                 tree_path=item.provenance.tree_path,
+                publisher_identity=item.provenance.publisher_identity,
             )
         ),
     )
@@ -189,11 +192,24 @@ def _metadata_response(metadata: SkillMetadata) -> SkillMetadataResponse:
     )
 
 
-def _provenance_response(provenance: ProvenanceMetadata | None) -> ProvenanceResponse | None:
+def _provenance_response(
+    provenance: ProvenanceMetadata | None,
+    *,
+    trust_tier: TrustTier,
+) -> ProvenanceResponse | None:
     if provenance is None:
         return None
     return ProvenanceResponse(
         repo_url=provenance.repo_url,
         commit_sha=provenance.commit_sha,
         tree_path=provenance.tree_path,
+        publisher_identity=provenance.publisher_identity,
+        trust_context=(
+            None
+            if provenance.policy_profile is None
+            else TrustContextResponse(
+                trust_tier=trust_tier,
+                policy_profile=provenance.policy_profile,
+            )
+        ),
     )

@@ -98,11 +98,21 @@ Publish and exact metadata fetch return the same immutable metadata envelope:
   "provenance": {
     "repo_url": "https://github.com/example/skills",
     "commit_sha": "aabbccddeeff00112233445566778899aabbccdd",
-    "tree_path": "skills/python.lint"
+    "tree_path": "skills/python.lint",
+    "publisher_identity": "ci/acme-release",
+    "trust_context": {
+      "trust_tier": "internal",
+      "policy_profile": "default"
+    }
   },
   "published_at": "2026-03-10T08:30:00Z"
 }
 ```
+
+`provenance` is advisory publish-time metadata only. `aptitude-publisher` or CI may
+collect repository and publisher fields, while the server validates them,
+persists them immutably, and derives `trust_context` from server-owned policy.
+Discovery, resolution, and raw content reads do not depend on provenance.
 
 ## Endpoint Summary
 
@@ -182,6 +192,7 @@ Rules:
 - Exact read only, not search.
 - Returns the same metadata envelope shape as publish.
 - Missing coordinates return `404`.
+- Advisory provenance may be returned when it was captured at publish time.
 - Read policy matches exact resolution rules: `published` and `deprecated` are readable with `read`; `archived` is admin-only.
 
 ### `GET /skills/{slug}/versions/{version}/content`
@@ -221,6 +232,8 @@ Notes:
 - The `slug` comes from the path; the JSON body carries versioned content and metadata only.
 - `internal` publish requires provenance.
 - `verified` publish requires provenance and `admin`.
+- Provenance is collected by the publisher client, validated and persisted by the server, and returned as advisory metadata only.
+- `trust_context` is server-derived and must not be supplied by clients.
 - Success returns metadata only, not embedded markdown or relationship graphs.
 
 ### `PATCH /skills/{slug}/versions/{version}/status`
@@ -279,7 +292,7 @@ only the ordered slug list.
 
 1. [`app/interface/api/resolution.py`](../app/interface/api/resolution.py) validates `slug` and `version` path params and requires `read`.
 2. [`app/core/skill_resolution.py`](../app/core/skill_resolution.py) performs one exact lookup through the repository's relationship-read port.
-3. The core service enforces exact-read governance for the stored lifecycle status.
+3. The core service enforces exact-read governance for the stored lifecycle status and audits both allowed and denied exact reads.
 4. The response is built by filtering the stored relationship selectors down to
    `depends_on` only.
 
@@ -292,7 +305,7 @@ the next decision.
 
 1. [`app/interface/api/fetch.py`](../app/interface/api/fetch.py) validates `slug` and `version` path params and requires `read`.
 2. [`app/core/skill_fetch.py`](../app/core/skill_fetch.py) performs one exact repository lookup for metadata or content.
-3. The core service checks exact-read governance on the stored lifecycle status.
+3. The core service checks exact-read governance on the stored lifecycle status and audits both allowed and denied exact reads.
 4. Missing coordinates raise `SKILL_VERSION_NOT_FOUND`.
 5. The route serializes:
    - metadata as the immutable JSON envelope

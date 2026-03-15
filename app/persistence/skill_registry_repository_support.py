@@ -305,4 +305,6 @@ def to_provenance(entity: SkillVersion) -> ProvenanceMetadata | None:
         repo_url=entity.provenance_repo_url,
         commit_sha=entity.provenance_commit_sha,
         tree_path=entity.provenance_tree_path,
+        publisher_identity=entity.provenance_publisher_identity,
+        policy_profile=entity.policy_profile_at_publish,
     )
