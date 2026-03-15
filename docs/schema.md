@@ -87,8 +87,8 @@ Stable identity row.
 | --- | --- | --- | --- |
 | `id` | `bigint` | PK | Internal identity key |
 | `slug` | `text` | `NOT NULL`, unique | Stable public skill identifier |
-| `created_at` | `timestamptz` | `NOT NULL` | Row creation time |
-| `updated_at` | `timestamptz` | `NOT NULL` | Last identity-state update |
+| `created_at` | `timestamptz` | `NOT NULL`, server default | Row creation time |
+| `updated_at` | `timestamptz` | `NOT NULL`, server default | Last identity-state update |
 
 Constraints and indexes:
 
