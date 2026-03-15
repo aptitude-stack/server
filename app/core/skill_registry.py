@@ -88,14 +88,14 @@ class SkillRegistryService:
         command: CreateSkillVersionCommand,
     ) -> SkillVersionDetail:
         """Publish one immutable normalized version."""
-        if self._registry.version_exists(slug=command.slug, version=command.version):
-            raise DuplicateSkillVersionError(slug=command.slug, version=command.version)
-
         self._governance_policy.evaluate_publish(
             caller=caller,
             governance=command.governance,
         )
         self._enforce_publish_intent(intent=command.intent, slug=command.slug)
+
+        if self._registry.version_exists(slug=command.slug, version=command.version):
+            raise DuplicateSkillVersionError(slug=command.slug, version=command.version)
 
         content_bytes = command.content.raw_markdown.encode("utf-8")
         checksum_digest = hashlib.sha256(content_bytes).hexdigest()
