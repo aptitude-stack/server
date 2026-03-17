@@ -254,7 +254,7 @@ services, and one SQLAlchemy repository adapter backed by PostgreSQL.
 
 ### Startup Wiring
 
-At startup, [`app/main.py`](../app/main.py) creates a single
+At startup, [`app/main.py`](../../app/main.py) creates a single
 `SQLAlchemySkillRegistryRepository`, a shared `GovernancePolicy`, and three
 read-side services:
 
@@ -263,23 +263,23 @@ read-side services:
 - `SkillFetchService`
 
 Those are stored in `app.state` and injected into route handlers through
-[`app/core/dependencies.py`](../app/core/dependencies.py). The same dependency
+[`app/core/dependencies.py`](../../app/core/dependencies.py). The same dependency
 module also authenticates Bearer tokens and turns them into `CallerIdentity`
 objects with `read`, `publish`, or `admin` scopes.
 
 ### Discovery Flow
 
-1. [`app/interface/api/discovery.py`](../app/interface/api/discovery.py) validates the request DTO and requires a `read` caller.
-2. The route calls [`app/core/skill_discovery.py`](../app/core/skill_discovery.py), which converts `{name, description, tags}` into a search query.
-3. Discovery reuses [`app/core/skill_search.py`](../app/core/skill_search.py):
+1. [`app/interface/api/discovery.py`](../../app/interface/api/discovery.py) validates the request DTO and requires a `read` caller.
+2. The route calls [`app/core/skill_discovery.py`](../../app/core/skill_discovery.py), which converts `{name, description, tags}` into a search query.
+3. Discovery reuses [`app/core/skill_search.py`](../../app/core/skill_search.py):
    - normalizes text and tags
-   - resolves lifecycle/trust-tier filters through [`app/core/governance.py`](../app/core/governance.py)
+   - resolves lifecycle/trust-tier filters through [`app/core/governance.py`](../../app/core/governance.py)
    - records an audit event
 4. The repository executes ranked SQL against the denormalized
    `skill_search_documents` table via
-   [`app/persistence/skill_registry_repository.py`](../app/persistence/skill_registry_repository.py)
+   [`app/persistence/skill_registry_repository.py`](../../app/persistence/skill_registry_repository.py)
    and
-   [`app/persistence/skill_registry_repository_support.py`](../app/persistence/skill_registry_repository_support.py).
+   [`app/persistence/skill_registry_repository_support.py`](../../app/persistence/skill_registry_repository_support.py).
 
 In practice, discovery is an indexed search path over normalized slug, name,
 description, tags, lifecycle status, trust tier, publication time, and content
@@ -290,8 +290,8 @@ only the ordered slug list.
 
 ### Resolution Flow
 
-1. [`app/interface/api/resolution.py`](../app/interface/api/resolution.py) validates `slug` and `version` path params and requires `read`.
-2. [`app/core/skill_resolution.py`](../app/core/skill_resolution.py) performs one exact lookup through the repository's relationship-read port.
+1. [`app/interface/api/resolution.py`](../../app/interface/api/resolution.py) validates `slug` and `version` path params and requires `read`.
+2. [`app/core/skill_resolution.py`](../../app/core/skill_resolution.py) performs one exact lookup through the repository's relationship-read port.
 3. The core service enforces exact-read governance for the stored lifecycle status and audits both allowed and denied exact reads.
 4. The response is built by filtering the stored relationship selectors down to
    `depends_on` only.
@@ -303,8 +303,8 @@ the next decision.
 
 ### Fetch Flow
 
-1. [`app/interface/api/fetch.py`](../app/interface/api/fetch.py) validates `slug` and `version` path params and requires `read`.
-2. [`app/core/skill_fetch.py`](../app/core/skill_fetch.py) performs one exact repository lookup for metadata or content.
+1. [`app/interface/api/fetch.py`](../../app/interface/api/fetch.py) validates `slug` and `version` path params and requires `read`.
+2. [`app/core/skill_fetch.py`](../../app/core/skill_fetch.py) performs one exact repository lookup for metadata or content.
 3. The core service checks exact-read governance on the stored lifecycle status and audits both allowed and denied exact reads.
 4. Missing coordinates raise `SKILL_VERSION_NOT_FOUND`.
 5. The route serializes:
@@ -332,8 +332,8 @@ The built-in default profile currently does this:
 
 Use these as implementation truth:
 
-- [`app/main.py`](../app/main.py)
-- [`app/interface/api/README.md`](../app/interface/api/README.md)
-- [`app/interface/dto/skills.py`](../app/interface/dto/skills.py)
-- [`app/interface/dto/examples.py`](../app/interface/dto/examples.py)
+- [`app/main.py`](../../app/main.py)
+- [`app/interface/api/README.md`](../../app/interface/api/README.md)
+- [`app/interface/dto/skills.py`](../../app/interface/dto/skills.py)
+- [`app/interface/dto/examples.py`](../../app/interface/dto/examples.py)
 - Swagger UI: `http://127.0.0.1:8000/docs`

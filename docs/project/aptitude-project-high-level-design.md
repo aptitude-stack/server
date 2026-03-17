@@ -1,7 +1,8 @@
 # Aptitude: High Level Design
 
-Team: Aptitude
-Members: Ela Shaul, Aviel Adika, Yonatan Csasnik
+**Team:** Aptitude
+
+**Members:** Ela Shaul, Aviel Adika, Yonatan Csasnik
 
 ## 1. Executive Summary
 

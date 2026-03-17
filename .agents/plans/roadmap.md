@@ -4,7 +4,7 @@
 Deliver a production-ready, PyPI-like immutable registry service (`aptitude-server`) in Python/FastAPI through incremental, testable milestones.
 
 ## Alignment Sources
-- Scope boundary and ownership: [`docs/scope.md`](../../docs/scope.md)
+- Scope boundary and ownership: [`docs/scope.md`](../../docs/project/scope.md)
 - Server requirements and KPIs: [`docs/prd.md`](../../docs/prd.md)
 - Resolver ownership and dependency-solving responsibilities are out of scope for this repository and tracked in the resolver repository.
 
