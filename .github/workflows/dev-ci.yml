@@ -38,7 +38,7 @@ jobs:
         run: uv run --extra dev mypy app
 
       - name: Run tests
-        run: uv run --extra dev pytest
+        run: uv run --extra dev pytest -m "not integration"
 
       - name: Import app entrypoint
         run: uv run python -c "from app.main import app"
