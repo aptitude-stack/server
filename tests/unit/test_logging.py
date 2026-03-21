@@ -8,6 +8,7 @@ import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
 from io import StringIO
+from pathlib import Path
 
 import pytest
 
@@ -111,6 +112,26 @@ def test_build_logging_config_auto_uses_json_for_non_interactive_runs() -> None:
 
 
 @pytest.mark.unit
+def test_build_logging_config_adds_json_file_handler_when_log_file_path_is_set() -> None:
+    config = build_logging_config(
+        "INFO",
+        log_format="pretty",
+        app_env="dev",
+        interactive=True,
+        log_file_path="/tmp/aptitude/app.jsonl",
+    )
+
+    assert config["formatters"]["default"]["()"] == "app.observability.logging.PrettyLogFormatter"
+    assert config["formatters"]["json"]["()"] == "app.observability.logging.JsonLogFormatter"
+    assert config["handlers"]["file"]["class"] == "logging.FileHandler"
+    assert config["handlers"]["file"]["formatter"] == "json"
+    assert config["handlers"]["file"]["filename"] == "/tmp/aptitude/app.jsonl"
+    assert config["root"]["handlers"] == ["default", "file"]
+    assert config["loggers"]["app"]["handlers"] == ["default", "file"]
+    assert config["loggers"]["uvicorn.error"]["handlers"] == ["default", "file"]
+
+
+@pytest.mark.unit
 def test_configured_logger_emits_json_with_request_context() -> None:
     configure_logging("INFO", log_format="json", app_env="test", interactive=False)
     set_request_context(
@@ -172,6 +193,40 @@ def test_configured_logger_emits_pretty_human_readable_output() -> None:
     assert "duration_ms=1.3" in output
     assert "request_id=req-456" in output
     assert output.startswith("20")
+
+
+@pytest.mark.unit
+def test_configured_logger_writes_json_to_file_handler(
+    tmp_path: Path,
+) -> None:
+    log_file_path = tmp_path / "app.jsonl"
+    configure_logging(
+        "INFO",
+        log_format="pretty",
+        app_env="dev",
+        interactive=True,
+        log_file_path=str(log_file_path),
+    )
+    set_request_context(
+        request_id="req-file",
+        http_method="GET",
+        http_route="/healthz",
+        status_code=200,
+        duration_ms=2.5,
+    )
+    logger = logging.getLogger("app.main")
+
+    try:
+        logger.info("file sink log", extra={"event_type": "request.completed"})
+    finally:
+        clear_request_context()
+
+    payload = json.loads(log_file_path.read_text().strip())
+
+    assert payload["message"] == "file sink log"
+    assert payload["request_id"] == "req-file"
+    assert payload["http_route"] == "/healthz"
+    assert payload["event_type"] == "request.completed"
 
 
 @pytest.mark.unit

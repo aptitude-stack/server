@@ -11,7 +11,8 @@ under one package without mixing them into the skill-domain core.
 
 - `context.py`: request-scoped metadata propagated through logs and audit
   events.
-- `logging.py`: centralized process logging configuration and formatters.
+- `logging.py`: centralized process logging configuration, formatters, and the
+  optional JSON file sink used by the local Loki/Promtail stack.
 - `metrics.py`: Prometheus-compatible counters, histograms, gauges, and
   exposition helpers.
 - `readiness.py`: readiness service and report models built on core-defined
@@ -23,3 +24,5 @@ under one package without mixing them into the skill-domain core.
 - It may depend on `app.core` contracts such as ports and audit-event helpers.
 - HTTP route definitions stay in `app.interface.api`; this package only exposes
   reusable runtime helpers those routes call.
+- The optional file sink is for local observability only; production log
+  backends remain external deployment choices.

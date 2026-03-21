@@ -8,3 +8,4 @@ These runbooks cover the Plan 11 operational surfaces for local validation and p
 - [Metadata and Content Fetch Failures](fetch-failures.md)
 - [Governance Denials](governance-denials.md)
 - [Metrics and Scrape Failures](metrics-scrape-failures.md)
+- [Log Ingestion Failures](log-ingestion-failures.md)

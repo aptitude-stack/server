@@ -4,11 +4,23 @@
   },
   "editable": true,
   "graphTooltip": 0,
+  "links": [
+    {
+      "asDropdown": false,
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [
+        "logs"
+      ],
+      "title": "Logs Dashboard",
+      "type": "dashboards"
+    }
+  ],
   "panels": [
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "grafana"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {},
@@ -34,7 +46,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "grafana"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {},
@@ -65,7 +77,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "grafana"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {},
@@ -96,7 +108,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "grafana"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {},
@@ -127,7 +139,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "grafana"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {},
@@ -158,7 +170,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "grafana"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {},

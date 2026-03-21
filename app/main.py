@@ -54,6 +54,7 @@ configure_logging(
     os.getenv("LOG_LEVEL", "INFO"),
     log_format=normalize_log_format(os.getenv("LOG_FORMAT")),
     app_env=os.getenv("APP_ENV", "dev"),
+    log_file_path=os.getenv("LOG_FILE_PATH"),
 )
 
 logger = logging.getLogger(__name__)
@@ -79,6 +80,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         settings.log_level,
         log_format=settings.log_format,
         app_env=settings.app_env,
+        log_file_path=settings.log_file_path,
     )
     if settings.auth_tokens:
         logger.info("loaded %d auth token(s) from settings", len(settings.auth_tokens))
@@ -194,7 +196,11 @@ def run_dev_server() -> None:
         host="127.0.0.1",
         port=int(os.getenv("PORT", "8000")),
         reload=reload_enabled,
-        log_config=build_logging_config(log_level, log_format=log_format),
+        log_config=build_logging_config(
+            log_level,
+            log_format=log_format,
+            log_file_path=os.getenv("LOG_FILE_PATH"),
+        ),
     )
 
 

@@ -7,6 +7,7 @@ import logging
 import sys
 from datetime import UTC, datetime
 from logging.config import dictConfig
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from app.observability.context import get_request_context
@@ -122,6 +123,7 @@ def build_logging_config(
     log_format: LogFormat = "auto",
     app_env: str = "dev",
     interactive: bool | None = None,
+    log_file_path: str | None = None,
 ) -> dict[str, Any]:
     """Return logging config with one shared formatter across app and libraries."""
     resolved_level = _resolve_level(level)
@@ -131,6 +133,32 @@ def build_logging_config(
         app_env=app_env,
         interactive=interactive,
     )
+    handler_names = ["default"]
+    handlers: dict[str, dict[str, Any]] = {
+        "default": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+            "filters": ["observability"],
+            "stream": "ext://sys.stdout",
+        },
+    }
+    formatters: dict[str, dict[str, Any]] = {
+        "default": {
+            "()": formatter_name,
+        },
+    }
+    if log_file_path is not None:
+        handler_names.append("file")
+        handlers["file"] = {
+            "class": "logging.FileHandler",
+            "formatter": "json",
+            "filters": ["observability"],
+            "filename": log_file_path,
+            "encoding": "utf-8",
+        }
+        formatters["json"] = {
+            "()": "app.observability.logging.JsonLogFormatter",
+        }
     return {
         "version": 1,
         "disable_existing_loggers": False,
@@ -139,66 +167,55 @@ def build_logging_config(
                 "()": "app.observability.logging.ObservabilityContextFilter",
             },
         },
-        "formatters": {
-            "default": {
-                "()": formatter_name,
-            },
-        },
-        "handlers": {
-            "default": {
-                "class": "logging.StreamHandler",
-                "formatter": "default",
-                "filters": ["observability"],
-                "stream": "ext://sys.stdout",
-            },
-        },
+        "formatters": formatters,
+        "handlers": handlers,
         "root": {
-            "handlers": ["default"],
+            "handlers": handler_names,
             "level": resolved_level,
         },
         "loggers": {
             "app": {
-                "handlers": ["default"],
+                "handlers": handler_names,
                 "level": resolved_level,
                 "propagate": False,
             },
             "uvicorn": {
-                "handlers": ["default"],
+                "handlers": handler_names,
                 "level": resolved_level,
                 "propagate": False,
             },
             "uvicorn.error": {
-                "handlers": ["default"],
+                "handlers": handler_names,
                 "level": resolved_level,
                 "propagate": False,
             },
             "uvicorn.access": {
-                "handlers": ["default"],
+                "handlers": handler_names,
                 "level": resolved_level,
                 "propagate": False,
             },
             "fastapi": {
-                "handlers": ["default"],
+                "handlers": handler_names,
                 "level": resolved_level,
                 "propagate": False,
             },
             "watchfiles": {
-                "handlers": ["default"],
+                "handlers": handler_names,
                 "level": noisy_library_level,
                 "propagate": False,
             },
             "watchfiles.main": {
-                "handlers": ["default"],
+                "handlers": handler_names,
                 "level": noisy_library_level,
                 "propagate": False,
             },
             "sqlalchemy": {
-                "handlers": ["default"],
+                "handlers": handler_names,
                 "level": noisy_library_level,
                 "propagate": False,
             },
             "psycopg": {
-                "handlers": ["default"],
+                "handlers": handler_names,
                 "level": noisy_library_level,
                 "propagate": False,
             },
@@ -212,15 +229,19 @@ def configure_logging(
     log_format: LogFormat = "auto",
     app_env: str = "dev",
     interactive: bool | None = None,
+    log_file_path: str | None = None,
 ) -> None:
     """Configure process logging with a deterministic format."""
     _reset_logging_handlers()
+    if log_file_path is not None:
+        Path(log_file_path).parent.mkdir(parents=True, exist_ok=True)
     dictConfig(
         build_logging_config(
             level,
             log_format=log_format,
             app_env=app_env,
             interactive=interactive,
+            log_file_path=log_file_path,
         )
     )
 

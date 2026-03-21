@@ -46,6 +46,8 @@ export LOG_LEVEL="INFO"
 export LOG_FORMAT="auto"
 ```
 
+`LOG_FILE_PATH` is optional and only used by the Docker-based local observability profile.
+
 ## 4. Run Database Migrations
 
 ```bash
@@ -93,7 +95,7 @@ Clients may also send an `X-Request-ID` header. The API echoes it on every respo
 
 ## Optional Local Observability Profile
 
-To validate Prometheus and Grafana locally with pinned Docker images:
+To validate metrics and logs locally with pinned Docker images:
 
 ```bash
 make observability-up
@@ -102,6 +104,8 @@ make observability-up
 This starts the API plus:
 
 - Prometheus at `http://127.0.0.1:9090`
+- Loki at `http://127.0.0.1:3100`
+- Promtail metrics at `http://127.0.0.1:9080/metrics`
 - Grafana at `http://127.0.0.1:3000`
 
 The observability profile keeps migrations explicit by running the one-shot `migrate` service before the app starts. Shut the stack down with:
@@ -109,3 +113,13 @@ The observability profile keeps migrations explicit by running the one-shot `mig
 ```bash
 make observability-down
 ```
+
+### Verify Log Flow
+
+Hit a simple route with a known request ID:
+
+```bash
+curl -H 'X-Request-ID: setup-dev-loki-check' http://127.0.0.1:8000/healthz
+```
+
+Then open Grafana and search for `setup-dev-loki-check` in the `Aptitude Server Logs` dashboard. That exercises the full local path from the API's JSON file sink through Promtail into Loki.
