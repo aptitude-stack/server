@@ -35,6 +35,5 @@ def test_docker_build_push_bootstraps_and_uses_named_builder() -> None:
     assert "docker buildx inspect --bootstrap ci-builder >/dev/null" in result.stdout
     assert (
         "docker buildx build --builder ci-builder --platform linux/amd64,linux/arm64 "
-        "--push -t example/image:test ."
-        in result.stdout
+        "--push -t example/image:test ." in result.stdout
     )
