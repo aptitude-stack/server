@@ -21,6 +21,83 @@ provenance snapshots, and audit data in PostgreSQL so callers can publish exact
 versions, discover candidate slugs, read direct authored dependencies, and
 fetch immutable metadata/content without crawling the full catalog.
 
+## Overview
+
+`aptitude-server` is the authoritative catalog for Aptitude skills.
+
+- It owns immutable publication, discovery candidate generation, exact
+  dependency reads, exact metadata/content fetch, lifecycle governance, audit,
+  and operational telemetry.
+- It does not own prompt interpretation, reranking, final selection,
+  dependency solving, lock generation, or execution planning. Those stay in the
+  resolver/client layer.
+- It uses PostgreSQL as the only authoritative runtime store, with a deliberate
+  split between discovery-facing metadata/search models and exact-fetch content
+  storage.
+
+The design target is registry-first and execution-agnostic: keep the server
+fast, cacheable, and deterministic, while the resolver/client stays responsible
+for runtime decisions.
+
+## System Design
+
+```mermaid
+flowchart LR
+    Publisher["Publisher / CI"]
+    Resolver["Resolver / MCP / CLI"]
+    Ops["Ops / observability"]
+
+    subgraph Server["aptitude-server"]
+        direction TB
+        Interface["Interface layer<br/>publish, discovery, resolution, fetch"]
+        Core["Core services<br/>registry, discovery, resolution, fetch, governance"]
+        Adapters["Persistence + audit adapters"]
+    end
+
+    Storage["Registry storage<br/>versions, metadata, content,<br/>selectors, search, audit"]
+
+    Publisher -->|publish / lifecycle writes| Interface
+    Resolver <-->|discovery / resolution / exact fetch| Interface
+    Ops <-->|health / metrics / logs / runbooks| Interface
+    Interface --> Core
+    Core --> Adapters
+    Adapters <-->|reads / writes| Storage
+```
+
+Design rules:
+
+- Server owns data-local work; resolver/client owns decision-local work.
+- Discovery returns ordered slug candidates only.
+- Resolution returns direct authored `depends_on` selectors only.
+- Exact fetch stays coordinate-based and immutable.
+- Historical milestone docs may mention older route names; the canonical
+  contract lives in [docs/project/api-contract.md](docs/project/api-contract.md).
+
+### Why Discovery, Resolution, and Fetch Are Separate
+
+The split is deliberate. These are different workloads, and collapsing them
+into one generic read API would mix hot search traffic with exact immutable
+reads and dependency lookups.
+
+| Surface | Request Shape | Response Shape | Primary Backing Data | Load Profile | Why It Stays Separate |
+| --- | --- | --- | --- | --- | --- |
+| Discovery | Loose query text and optional tags | Ordered candidate slugs | `skill_search_documents` and discovery ranking inputs | Highest fan-out, index-heavy, read-optimized | Keeps search traffic away from large immutable content reads. |
+| Resolution | Exact `slug` + `version` | Direct authored relationship selectors | `skill_relationship_selectors` | Deterministic, graph-local, lightweight | Lets dependency solving read only declared edges, not whole skill payloads. |
+| Fetch | Exact `slug` + `version` | Immutable metadata or markdown content | `skill_versions`, `skill_metadata`, `skill_contents` | Payload-heavy, cache-friendly, exact reads | Isolates full object retrieval from search and dependency workloads. |
+
+This separation gives clear load isolation:
+
+- Discovery can scale around search indexes and ranking without dragging full
+  markdown bodies through the hot path.
+- Resolution stays cheap and predictable because it reads only published
+  selector edges needed for dependency solving.
+- Fetch can optimize for immutable payload delivery, caching, and integrity
+  checks without affecting search latency.
+
+In practice, this means one noisy workload does not distort the others.
+Discovery traffic does not force content reads, and content reads do not bloat
+dependency-resolution paths.
+
 ## Frozen Route Surface
 
 The public HTTP baseline is:
@@ -49,6 +126,39 @@ treat those as history only.
 
 In practice, `aptitude-server` behaves like a package registry, while the
 resolver/client behaves like the package manager/runtime planner.
+
+## Skill Schema
+
+The skill schema is intentionally split so discovery stays body-free while exact
+fetch still returns immutable markdown.
+
+| Schema Area | Backing Table | Purpose | Returned By |
+| --- | --- | --- | --- |
+| Metadata | `skill_metadata` | Stores the structured, queryable skill description used for discovery and exact metadata reads. | `GET /skills/{slug}/versions/{version}` |
+| Content | `skill_contents` | Stores the immutable markdown body, checksum digest, and size metadata for exact content fetches. | `GET /skills/{slug}/versions/{version}/content` |
+| Version Binding | `skill_versions` | Binds one immutable version to one metadata row and one content row, plus lifecycle/trust/provenance state. | Publish + exact metadata reads |
+| Relationship Selectors | `skill_relationship_selectors` | Preserves authored `depends_on` and other selector families exactly as published. | `GET /resolution/{slug}/{version}` |
+| Search Projection | `skill_search_documents` | Derived discovery read model used for lexical search and deterministic candidate ordering. | `POST /discovery` |
+
+### Metadata Fields
+
+| Field | Stored In | Role |
+| --- | --- | --- |
+| `name` | `skill_metadata` | Human-readable display name returned in exact metadata reads and used in discovery matching. |
+| `description` | `skill_metadata` | Canonical short summary used for discovery and exact metadata responses. |
+| `tags` | `skill_metadata` | Primary categorical discovery filters. |
+| `headers` | `skill_metadata` | Flexible structured metadata that still belongs in the immutable metadata envelope. |
+| `inputs_schema` / `outputs_schema` | `skill_metadata` | Structured contract fragments for callers that need input/output shape information. |
+| `token_estimate` / `maturity_score` / `security_score` | `skill_metadata` | Numeric ranking/filtering inputs for discovery and downstream resolver scoring. |
+
+### Content Fields
+
+| Field | Stored In | Role |
+| --- | --- | --- |
+| `raw_markdown` | `skill_contents` | Canonical immutable markdown body. |
+| `storage_size_bytes` | `skill_contents` | Exact content size used for diagnostics and response metadata. |
+| `checksum_digest` | `skill_contents` | Digest-backed content identity for integrity and caching. |
+| `checksum_digest` | `skill_versions` | Version-level checksum returned in exact metadata responses. |
 
 ## Quick Start
 
