@@ -22,6 +22,12 @@ def test_request_context_round_trips_and_clears() -> None:
         http_route="/discovery",
         status_code=401,
         duration_ms=8.0,
+        client_ip="127.0.0.1",
+        user_agent="pytest",
+        surface="discovery",
+        outcome="client_error",
+        error_code="AUTHENTICATION_REQUIRED",
+        exception_type="ApiError",
     )
 
     context = get_request_context()
@@ -30,6 +36,12 @@ def test_request_context_round_trips_and_clears() -> None:
     assert context.http_route == "/discovery"
     assert context.status_code == 401
     assert context.duration_ms == 8.0
+    assert context.client_ip == "127.0.0.1"
+    assert context.user_agent == "pytest"
+    assert context.surface == "discovery"
+    assert context.outcome == "client_error"
+    assert context.error_code == "AUTHENTICATION_REQUIRED"
+    assert context.exception_type == "ApiError"
 
     clear_request_context()
     cleared = get_request_context()
@@ -38,6 +50,12 @@ def test_request_context_round_trips_and_clears() -> None:
     assert cleared.http_route is None
     assert cleared.status_code is None
     assert cleared.duration_ms is None
+    assert cleared.client_ip is None
+    assert cleared.user_agent is None
+    assert cleared.surface is None
+    assert cleared.outcome is None
+    assert cleared.error_code is None
+    assert cleared.exception_type is None
 
 
 @pytest.mark.unit

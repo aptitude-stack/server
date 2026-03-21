@@ -41,6 +41,12 @@ class ObservabilityContextFilter(logging.Filter):
         record.http_route = context.http_route
         record.status_code = context.status_code
         record.duration_ms = context.duration_ms
+        record.client_ip = context.client_ip
+        record.user_agent = context.user_agent
+        record.surface = context.surface
+        record.outcome = context.outcome
+        record.error_code = context.error_code
+        record.exception_type = context.exception_type
         if not hasattr(record, "event_type"):
             record.event_type = None
         return True
@@ -63,6 +69,24 @@ class JsonLogFormatter(logging.Formatter):
             "status_code": getattr(record, "status_code", None),
             "duration_ms": getattr(record, "duration_ms", None),
         }
+        client_ip = getattr(record, "client_ip", None)
+        user_agent = getattr(record, "user_agent", None)
+        surface = getattr(record, "surface", None)
+        outcome = getattr(record, "outcome", None)
+        error_code = getattr(record, "error_code", None)
+        exception_type = getattr(record, "exception_type", None)
+        if client_ip is not None:
+            payload["client_ip"] = client_ip
+        if user_agent is not None:
+            payload["user_agent"] = user_agent
+        if surface is not None:
+            payload["surface"] = surface
+        if outcome is not None:
+            payload["outcome"] = outcome
+        if error_code is not None:
+            payload["error_code"] = error_code
+        if exception_type is not None:
+            payload["exception_type"] = exception_type
         event_type = getattr(record, "event_type", None)
         if event_type is not None:
             payload["event_type"] = event_type
@@ -89,6 +113,10 @@ class PrettyLogFormatter(logging.Formatter):
         status_code = getattr(record, "status_code", None)
         duration_ms = getattr(record, "duration_ms", None)
         request_id = getattr(record, "request_id", None)
+        surface = getattr(record, "surface", None)
+        outcome = getattr(record, "outcome", None)
+        error_code = getattr(record, "error_code", None)
+        exception_type = getattr(record, "exception_type", None)
         if http_method:
             extras.append(f"method={http_method}")
         if http_route:
@@ -99,6 +127,14 @@ class PrettyLogFormatter(logging.Formatter):
             extras.append(f"duration_ms={duration_ms}")
         if request_id:
             extras.append(f"request_id={request_id}")
+        if surface:
+            extras.append(f"surface={surface}")
+        if outcome:
+            extras.append(f"outcome={outcome}")
+        if error_code:
+            extras.append(f"error_code={error_code}")
+        if exception_type:
+            extras.append(f"exception_type={exception_type}")
         event_type = getattr(record, "event_type", None)
         if event_type is not None:
             extras.append(f"event={event_type}")

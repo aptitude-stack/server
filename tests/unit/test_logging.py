@@ -141,6 +141,10 @@ def test_configured_logger_emits_json_with_request_context() -> None:
         http_route="/healthz",
         status_code=200,
         duration_ms=12.5,
+        client_ip="127.0.0.1",
+        user_agent="pytest-agent",
+        surface="system",
+        outcome="success",
     )
     logger = logging.getLogger("app.main")
 
@@ -161,6 +165,10 @@ def test_configured_logger_emits_json_with_request_context() -> None:
     assert payload["http_route"] == "/healthz"
     assert payload["status_code"] == 200
     assert payload["duration_ms"] == 12.5
+    assert payload["client_ip"] == "127.0.0.1"
+    assert payload["user_agent"] == "pytest-agent"
+    assert payload["surface"] == "system"
+    assert payload["outcome"] == "success"
     assert payload["event_type"] == "request.completed"
     assert "timestamp" in payload
 
@@ -174,6 +182,10 @@ def test_configured_logger_emits_pretty_human_readable_output() -> None:
         http_route="/healthz",
         status_code=200,
         duration_ms=1.3,
+        surface="system",
+        outcome="success",
+        error_code="AUTHENTICATION_REQUIRED",
+        exception_type="ApiError",
     )
     logger = logging.getLogger("app.main")
 
@@ -193,6 +205,10 @@ def test_configured_logger_emits_pretty_human_readable_output() -> None:
     assert "status=200" in output
     assert "duration_ms=1.3" in output
     assert "request_id=req-456" in output
+    assert "surface=system" in output
+    assert "outcome=success" in output
+    assert "error_code=AUTHENTICATION_REQUIRED" in output
+    assert "exception_type=ApiError" in output
     assert output.startswith("20")
 
 
@@ -214,6 +230,8 @@ def test_configured_logger_writes_json_to_file_handler(
         http_route="/healthz",
         status_code=200,
         duration_ms=2.5,
+        surface="system",
+        outcome="success",
     )
     logger = logging.getLogger("app.main")
 
@@ -227,6 +245,8 @@ def test_configured_logger_writes_json_to_file_handler(
     assert payload["message"] == "file sink log"
     assert payload["request_id"] == "req-file"
     assert payload["http_route"] == "/healthz"
+    assert payload["surface"] == "system"
+    assert payload["outcome"] == "success"
     assert payload["event_type"] == "request.completed"
 
 

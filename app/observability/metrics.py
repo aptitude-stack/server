@@ -51,6 +51,7 @@ _ROUTE_TO_SURFACE: dict[tuple[str, str], str] = {
     ("GET", "/skills/{slug}/versions/{version}/content"): "content",
     ("PATCH", "/skills/{slug}/versions/{version}/status"): "lifecycle",
 }
+_SYSTEM_ROUTES = frozenset({"/metrics", "/healthz", "/readyz"})
 
 
 def observe_http_request(
@@ -78,7 +79,7 @@ def observe_http_request(
 
     REGISTRY_OPERATION_TOTAL.labels(
         surface=surface,
-        outcome=_outcome(status_code),
+        outcome=outcome_for_status_code(status_code),
     ).inc()
     REGISTRY_OPERATION_DURATION_SECONDS.labels(surface=surface).observe(duration_seconds)
 
@@ -102,9 +103,19 @@ def _status_class(status_code: int) -> str:
     return f"{status_code // 100}xx"
 
 
-def _outcome(status_code: int) -> str:
+def outcome_for_status_code(status_code: int) -> str:
     if status_code < 400:
         return "success"
     if status_code < 500:
         return "client_error"
     return "server_error"
+
+
+def surface_for_request(*, method: str, route: str) -> str | None:
+    normalized_method = method.upper()
+    surface = _ROUTE_TO_SURFACE.get((normalized_method, route))
+    if surface is not None:
+        return surface
+    if route in _SYSTEM_ROUTES:
+        return "system"
+    return None

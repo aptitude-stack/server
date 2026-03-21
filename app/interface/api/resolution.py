@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Path, status
+from fastapi import APIRouter, Path, Request, status
 from fastapi.responses import JSONResponse
 
 from app.core.dependencies import ReadCallerDep, SkillResolutionServiceDep
@@ -48,6 +48,7 @@ RESOLUTION_RESPONSES: ApiResponses = {
     responses=RESOLUTION_RESPONSES,
 )
 def get_direct_dependencies(
+    request: Request,
     slug: Annotated[
         str,
         Path(pattern=SLUG_PATTERN, description="Stable public slug of the skill to resolve."),
@@ -68,6 +69,7 @@ def get_direct_dependencies(
         )
     except SkillVersionNotFoundError as exc:
         return error_response(
+            request=request,
             status_code=status.HTTP_404_NOT_FOUND,
             code="SKILL_VERSION_NOT_FOUND",
             message=str(exc),

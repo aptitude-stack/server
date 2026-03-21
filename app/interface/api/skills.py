@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Path, status
+from fastapi import APIRouter, Path, Request, status
 from fastapi.responses import JSONResponse
 
 from app.core.dependencies import (
@@ -123,6 +123,7 @@ STATUS_RESPONSES: ApiResponses = {
     },
 )
 def create_skill_version(
+    http_request: Request,
     slug: Annotated[
         str,
         Path(pattern=SLUG_PATTERN, description="Stable public slug for the skill identity."),
@@ -140,6 +141,7 @@ def create_skill_version(
         return to_metadata_response(stored)
     except DuplicateSkillVersionError as exc:
         return error_response(
+            request=http_request,
             status_code=status.HTTP_409_CONFLICT,
             code="DUPLICATE_SKILL_VERSION",
             message=str(exc),
@@ -147,6 +149,7 @@ def create_skill_version(
         )
     except SkillAlreadyExistsError as exc:
         return error_response(
+            request=http_request,
             status_code=status.HTTP_409_CONFLICT,
             code="SKILL_ALREADY_EXISTS",
             message=str(exc),
@@ -154,6 +157,7 @@ def create_skill_version(
         )
     except SkillNotFoundError as exc:
         return error_response(
+            request=http_request,
             status_code=status.HTTP_404_NOT_FOUND,
             code="SKILL_NOT_FOUND",
             message=str(exc),
@@ -161,6 +165,7 @@ def create_skill_version(
         )
     except SkillRegistryError as exc:
         return error_response(
+            request=http_request,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             code="CONTENT_STORAGE_FAILURE",
             message=str(exc),
@@ -177,6 +182,7 @@ def create_skill_version(
     responses=STATUS_RESPONSES,
 )
 def update_skill_version_status(
+    http_request: Request,
     request: SkillVersionStatusUpdateRequest,
     registry_service: SkillRegistryServiceDep,
     caller: AdminCallerDep,
@@ -201,6 +207,7 @@ def update_skill_version_status(
         return to_version_status_response(updated)
     except SkillVersionNotFoundError as exc:
         return error_response(
+            request=http_request,
             status_code=status.HTTP_404_NOT_FOUND,
             code="SKILL_VERSION_NOT_FOUND",
             message=str(exc),

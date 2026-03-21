@@ -121,7 +121,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 4
       },
       "id": 1,
       "options": {
@@ -139,7 +139,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (level) (count_over_time({service_name=\"aptitude-server\"} | json | logger=\"app.main\" [5m]))",
+          "expr": "sum by (level) (count_over_time({service_name=\"aptitude-server\"} | json | logger=\"app.main\" | event_type != \"\" | http_route != \"/metrics\" | http_route != \"/healthz\" | http_route != \"/readyz\" [5m]))",
           "legendFormat": "{{level}}",
           "queryType": "range",
           "refId": "A"
@@ -153,11 +153,267 @@
         "type": "loki",
         "uid": "loki"
       },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 25
+              },
+              {
+                "color": "red",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(count_over_time({service_name=\"aptitude-server\"} | json | logger=\"app.main\" | event_type=\"request.completed\" | http_route != \"/metrics\" | http_route != \"/healthz\" | http_route != \"/readyz\" [15m]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Requests (15m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(count_over_time({service_name=\"aptitude-server\"} | json | level=\"ERROR\" [15m]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Errors (15m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(count_over_time({service_name=\"aptitude-server\"} | json | logger=\"app.main\" | status_code >= 400 | http_route != \"/metrics\" | http_route != \"/healthz\" | http_route != \"/readyz\" [15m]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Failed Requests (15m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(count_over_time({service_name=\"aptitude-server\"} | json | logger=\"app.main\" | event_type=\"request.completed\" | duration_ms > 250 | http_route != \"/metrics\" | http_route != \"/healthz\" | http_route != \"/readyz\" [15m]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Slow Requests (15m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
       "gridPos": {
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 6
+        "y": 10
       },
       "id": 2,
       "options": {
@@ -168,12 +424,12 @@
         "showLabels": false,
         "showTime": true,
         "sortOrder": "Descending",
-        "wrapLogMessage": true
+        "wrapLogMessage": false
       },
       "targets": [
         {
           "editorMode": "code",
-          "expr": "{service_name=\"aptitude-server\"} | json | logger=\"app.main\" | event_type=\"request.completed\" | line_format \"{{.http_method}} {{.http_route}} status={{.status_code}} duration_ms={{.duration_ms}} request_id={{.request_id}}\"",
+          "expr": "{service_name=\"aptitude-server\"} | json | logger=\"app.main\" | event_type=\"request.completed\" | http_route != \"/metrics\" | http_route != \"/healthz\" | http_route != \"/readyz\" | line_format \"{{ printf \\\"%-6s %-44.44s %-10.10s %3v %8s ms %-12.12s\\\" .http_method .http_route .surface .status_code .duration_ms .outcome }}{{ if .error_code }} {{ .error_code }}{{ end }}\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -190,7 +446,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 16
+        "y": 20
       },
       "id": 3,
       "options": {
@@ -201,12 +457,12 @@
         "showLabels": false,
         "showTime": true,
         "sortOrder": "Descending",
-        "wrapLogMessage": true
+        "wrapLogMessage": false
       },
       "targets": [
         {
           "editorMode": "code",
-          "expr": "{service_name=\"aptitude-server\"} | json | level=\"ERROR\" | line_format \"{{.logger}} {{.message}} request_id={{.request_id}} route={{.http_route}} status={{.status_code}}\"",
+          "expr": "{service_name=\"aptitude-server\"} | json | level=\"ERROR\" | line_format \"{{ printf \\\"%-8s %-18.18s %-24.24s %-10.10s %3v\\\" .level .logger .message .surface .status_code }}{{ if .error_code }} {{ .error_code }}{{ end }}{{ if .exception_type }} {{ .exception_type }}{{ end }}\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -223,7 +479,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 16
+        "y": 20
       },
       "id": 4,
       "options": {
@@ -234,12 +490,12 @@
         "showLabels": false,
         "showTime": true,
         "sortOrder": "Descending",
-        "wrapLogMessage": true
+        "wrapLogMessage": false
       },
       "targets": [
         {
           "editorMode": "code",
-          "expr": "{service_name=\"aptitude-server\"} | json | logger=\"app.main\" | status_code >= 400 | line_format \"{{.http_method}} {{.http_route}} status={{.status_code}} duration_ms={{.duration_ms}} request_id={{.request_id}}\"",
+          "expr": "{service_name=\"aptitude-server\"} | json | logger=\"app.main\" | status_code >= 400 | http_route != \"/metrics\" | http_route != \"/healthz\" | http_route != \"/readyz\" | line_format \"{{ printf \\\"%-6s %-44.44s %-10.10s %3v %8s ms %-12.12s\\\" .http_method .http_route .surface .status_code .duration_ms .outcome }}{{ if .error_code }} {{ .error_code }}{{ end }}\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -256,7 +512,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 25
+        "y": 29
       },
       "id": 5,
       "options": {
@@ -267,12 +523,12 @@
         "showLabels": false,
         "showTime": true,
         "sortOrder": "Descending",
-        "wrapLogMessage": true
+        "wrapLogMessage": false
       },
       "targets": [
         {
           "editorMode": "code",
-          "expr": "{service_name=\"aptitude-server\"} |= \"$request_id\" | json | logger=\"app.main\" | line_format \"{{.http_method}} {{.http_route}} status={{.status_code}} duration_ms={{.duration_ms}} event={{.event_type}} request_id={{.request_id}}\"",
+          "expr": "{service_name=\"aptitude-server\"} |= \"$request_id\" | json | logger=\"app.main\" | line_format \"{{ printf \\\"%-18.18s %-6s %-36.36s %-10.10s %3v %8s ms %-12.12s\\\" .event_type .http_method .http_route .surface .status_code .duration_ms .outcome }}{{ if .error_code }} {{ .error_code }}{{ end }}\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -285,28 +541,33 @@
         "type": "loki",
         "uid": "loki"
       },
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 35
+        "y": 39
       },
       "id": 6,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (event_type) (count_over_time({service_name=\"aptitude-server\"} | json | logger=\"app.main\" | event_type != \"\" [15m]))",
-          "legendFormat": "{{event_type}}",
+          "expr": "{service_name=\"aptitude-server\"} | json | logger=\"app.main\" | event_type=\"request.completed\" | http_route =~ \"/(metrics|healthz|readyz)\" | line_format \"{{ printf \\\"%-6s %-18.18s %3v %8s ms\\\" .http_method .http_route .status_code .duration_ms }}\"",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "event_type Volume (15m)",
-      "type": "timeseries"
+      "title": "System Traffic Logs",
+      "type": "logs"
     }
   ],
   "refresh": "30s",

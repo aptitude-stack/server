@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 from uuid import uuid4
 
@@ -146,3 +147,43 @@ def test_publish_flow_stitches_request_id_into_audit_rows_and_metrics(
         for event in audit_events
     )
     assert "aptitude_registry_operation_total" in metrics.text
+
+
+@pytest.mark.integration
+def test_structured_request_logs_capture_surface_outcome_and_error_code(
+    monkeypatch: pytest.MonkeyPatch,
+    require_integration_database: str,
+    tmp_path,
+) -> None:
+    monkeypatch.setenv("DATABASE_URL", require_integration_database)
+    monkeypatch.setenv("LOG_FILE_PATH", str(tmp_path / "app.jsonl"))
+
+    with TestClient(create_app()) as client:
+        response = client.post(
+            "/discovery",
+            json={"name": "Python Lint"},
+            headers={"X-Request-ID": "req-log-shape"},
+        )
+
+    assert response.status_code == 401
+
+    log_lines = [
+        json.loads(line)
+        for line in (tmp_path / "app.jsonl").read_text().splitlines()
+        if line.strip()
+    ]
+    request_log = next(
+        payload
+        for payload in log_lines
+        if payload.get("event_type") == "request.completed"
+        and payload.get("request_id") == "req-log-shape"
+    )
+
+    assert request_log["http_method"] == "POST"
+    assert request_log["http_route"] == "/discovery"
+    assert request_log["status_code"] == 401
+    assert request_log["surface"] == "discovery"
+    assert request_log["outcome"] == "client_error"
+    assert request_log["error_code"] == "AUTHENTICATION_REQUIRED"
+    assert request_log["client_ip"] == "testclient"
+    assert "user_agent" in request_log

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Response, status
+from fastapi import APIRouter, Path, Request, Response, status
 from fastapi.responses import JSONResponse
 
 from app.core.dependencies import ReadCallerDep, SkillFetchServiceDep
@@ -64,6 +64,7 @@ CONTENT_RESPONSES: ApiResponses = {
     responses=METADATA_RESPONSES,
 )
 def get_version_metadata(
+    request: Request,
     slug: Annotated[
         str,
         Path(pattern=SLUG_PATTERN, description="Stable public slug of the requested skill."),
@@ -87,6 +88,7 @@ def get_version_metadata(
         )
     except SkillVersionNotFoundError as exc:
         return error_response(
+            request=request,
             status_code=status.HTTP_404_NOT_FOUND,
             code="SKILL_VERSION_NOT_FOUND",
             message=str(exc),
@@ -105,6 +107,7 @@ def get_version_metadata(
     responses=CONTENT_RESPONSES,
 )
 def get_version_content(
+    request: Request,
     slug: Annotated[
         str,
         Path(pattern=SLUG_PATTERN, description="Stable public slug of the requested skill."),
@@ -128,6 +131,7 @@ def get_version_content(
         )
     except SkillVersionNotFoundError as exc:
         return error_response(
+            request=request,
             status_code=status.HTTP_404_NOT_FOUND,
             code="SKILL_VERSION_NOT_FOUND",
             message=str(exc),

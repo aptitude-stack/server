@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 from collections.abc import AsyncIterator, Awaitable, Callable
@@ -35,7 +36,11 @@ from app.observability.logging import (
     configure_logging,
     normalize_log_format,
 )
-from app.observability.metrics import observe_http_request
+from app.observability.metrics import (
+    observe_http_request,
+    outcome_for_status_code,
+    surface_for_request,
+)
 from app.persistence.db import dispose_engine
 from app.service_container import build_service_container
 
@@ -114,22 +119,31 @@ def create_app() -> FastAPI:
         request_id = request.headers.get("X-Request-ID") or str(uuid4())
         started_at = perf_counter()
         request.state.request_id = request_id
-        set_request_context(request_id=request_id, http_method=request.method)
+        set_request_context(
+            request_id=request_id,
+            http_method=request.method,
+            client_ip=request.client.host if request.client is not None else None,
+            user_agent=request.headers.get("user-agent"),
+        )
 
         try:
             response = await call_next(request)
-        except Exception:
+        except Exception as exc:
             route = _route_template(request)
             duration_seconds = perf_counter() - started_at
+            status_code = 500
             set_request_context(
                 http_route=route,
-                status_code=500,
+                status_code=status_code,
                 duration_ms=round(duration_seconds * 1000, 3),
+                surface=surface_for_request(method=request.method, route=route),
+                outcome=outcome_for_status_code(status_code),
+                exception_type=type(exc).__name__,
             )
             observe_http_request(
                 method=request.method,
                 route=route,
-                status_code=500,
+                status_code=status_code,
                 duration_seconds=duration_seconds,
             )
             logger.exception("request failed", extra={"event_type": "request.failed"})
@@ -138,10 +152,19 @@ def create_app() -> FastAPI:
 
         route = _route_template(request)
         duration_seconds = perf_counter() - started_at
+        outcome = outcome_for_status_code(response.status_code)
+        error_code = (
+            getattr(request.state, "error_code", None)
+            or getattr(response, "error_code", None)
+            or _response_error_code(response)
+        )
         set_request_context(
             http_route=route,
             status_code=response.status_code,
             duration_ms=round(duration_seconds * 1000, 3),
+            surface=surface_for_request(method=request.method, route=route),
+            outcome=outcome,
+            error_code=error_code,
         )
         observe_http_request(
             method=request.method,
@@ -213,3 +236,22 @@ def _route_template(request: Request) -> str:
     if isinstance(route, APIRoute):
         return route.path
     return "__unmatched__"
+
+
+def _response_error_code(response: Response) -> str | None:
+    if response.status_code < 400:
+        return None
+    if "application/json" not in response.headers.get("content-type", ""):
+        return None
+    body = getattr(response, "body", None)
+    if not isinstance(body, bytes):
+        return None
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError:
+        return None
+    error = payload.get("error")
+    if not isinstance(error, dict):
+        return None
+    code = error.get("code")
+    return code if isinstance(code, str) else None

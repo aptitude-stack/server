@@ -16,6 +16,12 @@ class RequestContext:
     http_route: str | None = None
     status_code: int | None = None
     duration_ms: float | None = None
+    client_ip: str | None = None
+    user_agent: str | None = None
+    surface: str | None = None
+    outcome: str | None = None
+    error_code: str | None = None
+    exception_type: str | None = None
 
 
 _UNSET: Final = object()
@@ -38,6 +44,12 @@ def set_request_context(
     http_route: str | None | object = _UNSET,
     status_code: int | None | object = _UNSET,
     duration_ms: float | None | object = _UNSET,
+    client_ip: str | None | object = _UNSET,
+    user_agent: str | None | object = _UNSET,
+    surface: str | None | object = _UNSET,
+    outcome: str | None | object = _UNSET,
+    error_code: str | None | object = _UNSET,
+    exception_type: str | None | object = _UNSET,
 ) -> None:
     """Update the request context, preserving omitted fields."""
     current = get_request_context()
@@ -57,6 +69,20 @@ def set_request_context(
             ),
             duration_ms=(
                 current.duration_ms if duration_ms is _UNSET else cast("float | None", duration_ms)
+            ),
+            client_ip=(current.client_ip if client_ip is _UNSET else cast("str | None", client_ip)),
+            user_agent=(
+                current.user_agent if user_agent is _UNSET else cast("str | None", user_agent)
+            ),
+            surface=(current.surface if surface is _UNSET else cast("str | None", surface)),
+            outcome=(current.outcome if outcome is _UNSET else cast("str | None", outcome)),
+            error_code=(
+                current.error_code if error_code is _UNSET else cast("str | None", error_code)
+            ),
+            exception_type=(
+                current.exception_type
+                if exception_type is _UNSET
+                else cast("str | None", exception_type)
             ),
         )
     )
