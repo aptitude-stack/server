@@ -3,8 +3,9 @@ DOCKER_IMAGE ?= y0ncha/aptitude-server
 DOCKER_TAG ?= latest
 DOCKER_IMAGE_REF := $(DOCKER_IMAGE):$(DOCKER_TAG)
 DOCKER_PLATFORMS ?= linux/amd64,linux/arm64
+DOCKER_BUILDER ?= aptitude-multiarch
 
-.PHONY: run debug test lint format typecheck migrate-up migrate-down db-up db-down docker-migrate observability-up observability-down docker-smoke docker-build docker-push docker-build-push
+.PHONY: run debug test lint format typecheck migrate-up migrate-down db-up db-down docker-migrate observability-up observability-down docker-smoke docker-build docker-buildx-bootstrap docker-push docker-build-push
 
 run:
 	@printf "\033[1;36m==>\033[0m \033[1mStarting FastAPI dev server\033[0m\n"
@@ -105,7 +106,11 @@ docker-smoke:
 docker-build:
 	docker buildx build --load -t $(DOCKER_IMAGE_REF) .
 
-docker-push:
-	docker buildx build --platform $(DOCKER_PLATFORMS) --push -t $(DOCKER_IMAGE_REF) .
+docker-buildx-bootstrap:
+	@docker buildx inspect $(DOCKER_BUILDER) >/dev/null 2>&1 || docker buildx create --name $(DOCKER_BUILDER) --driver docker-container >/dev/null
+	@docker buildx inspect --bootstrap $(DOCKER_BUILDER) >/dev/null
+
+docker-push: docker-buildx-bootstrap
+	docker buildx build --builder $(DOCKER_BUILDER) --platform $(DOCKER_PLATFORMS) --push -t $(DOCKER_IMAGE_REF) .
 
 docker-build-push: docker-push
