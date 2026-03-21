@@ -44,9 +44,7 @@ def test_grafana_dashboard_covers_key_registry_surfaces() -> None:
         if dashboard.name == "aptitude-server-operability.json"
     )
     logs_dashboard = next(
-        dashboard
-        for dashboard in dashboards
-        if dashboard.name == "aptitude-server-logs.json"
+        dashboard for dashboard in dashboards if dashboard.name == "aptitude-server-logs.json"
     )
 
     metrics_document = metrics_dashboard.read_text()
