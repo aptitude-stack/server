@@ -113,3 +113,4 @@ docker-buildx-bootstrap:
 docker-push: docker-buildx-bootstrap
 	docker buildx build --builder $(DOCKER_BUILDER) --platform $(DOCKER_PLATFORMS) --push -t $(DOCKER_IMAGE_REF) .
 
+docker-build-push: docker-push
