@@ -239,9 +239,7 @@ def test_list_versions_returns_visible_versions_with_current_default_first() -> 
 def test_list_versions_hides_fully_invisible_skills() -> None:
     service = SkillFetchService(
         version_reader=FakeVersionReader(
-            versions=(
-                _stored_version_summary("1.0.0", lifecycle_status="archived"),
-            )
+            versions=(_stored_version_summary("1.0.0", lifecycle_status="archived"),)
         ),
         audit_recorder=FakeAuditRecorder(),
         governance_policy=_governance_policy(),
