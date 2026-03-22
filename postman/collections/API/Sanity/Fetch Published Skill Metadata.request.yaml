@@ -1,8 +1,8 @@
 $kind: http-request
-order: 8000
+order: 8500
 
 method: GET
-url: '{{baseUrl}}/skills/{{sanity_primary_slug}}/versions/{{sanity_version_2}}'
+url: '{{baseUrl}}/skills/{{sanity_primary_slug}}/{{sanity_version_2}}'
 
 headers:
   - key: Accept

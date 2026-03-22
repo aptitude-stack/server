@@ -194,12 +194,13 @@ This separation is required for speed and scalability.
 
 The server must expose registry-oriented contracts such as:
 
-- `POST /skills/{slug}/versions`
+- `POST /skills/{slug}`
 - `POST /discovery`
+- `GET /skills/{slug}`
 - `GET /resolution/{slug}/{version}`
-- `GET /skills/{slug}/versions/{version}`
-- `GET /skills/{slug}/versions/{version}/content`
-- `PATCH /skills/{slug}/versions/{version}/status`
+- `GET /skills/{slug}/{version}`
+- `GET /skills/{slug}/{version}/content`
+- `PATCH /skills/{slug}/{version}/status`
 
 This route set is the frozen public baseline. Later milestones may refine
 payload fields, headers, and policy behavior inside these routes, but they do
@@ -209,7 +210,7 @@ not add sibling public read route families or compatibility aliases.
 decision making. It should accept structured search input and return stable slug
 ordering without embedding final selection or dependency-solving semantics.
 
-`POST /skills/{slug}/versions` remains the only publish route, but callers must
+`POST /skills/{slug}` remains the publish route, but callers must
 declare `intent=create_skill` or `intent=publish_version` so the server can
 distinguish first publication from publication to an existing slug.
 

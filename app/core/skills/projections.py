@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.core.ports import StoredSkillVersion
+from app.core.ports import StoredSkillVersion, StoredSkillVersionSummary
 
 from .models import (
     SHA256_ALGORITHM,
@@ -10,6 +10,7 @@ from .models import (
     SkillContentSummary,
     SkillMetadata,
     SkillVersionDetail,
+    SkillVersionSummary,
 )
 
 
@@ -44,4 +45,19 @@ def to_skill_version_detail(*, stored: StoredSkillVersion) -> SkillVersionDetail
         trust_tier=stored.trust_tier,
         provenance=stored.provenance,
         published_at=stored.published_at,
+    )
+
+
+def to_skill_version_summary(
+    *,
+    stored: StoredSkillVersionSummary,
+    is_current_default: bool,
+) -> SkillVersionSummary:
+    """Project one stored summary row into the public list domain model."""
+    return SkillVersionSummary(
+        version=stored.version,
+        lifecycle_status=stored.lifecycle_status,
+        trust_tier=stored.trust_tier,
+        published_at=stored.published_at,
+        is_current_default=is_current_default,
     )

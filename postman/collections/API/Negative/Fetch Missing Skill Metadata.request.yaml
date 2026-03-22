@@ -2,7 +2,7 @@ $kind: http-request
 order: 3000
 
 method: GET
-url: '{{baseUrl}}/skills/{{negative_missing_slug}}/versions/{{negative_missing_version}}'
+url: '{{baseUrl}}/skills/{{negative_missing_slug}}/{{negative_missing_version}}'
 
 headers:
   - key: Accept

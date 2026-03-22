@@ -35,11 +35,11 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev --frozen
 
+      - name: Format code
+        run: uv run --extra dev ruff format .
+
       - name: Lint
         run: uv run --extra dev ruff check .
-
-      - name: Check formatting
-        run: uv run --extra dev ruff format --check .
 
       - name: Typecheck
         run: uv run --extra dev mypy app

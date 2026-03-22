@@ -173,12 +173,14 @@ curl \
       "overlaps_with": []
     }
   }' \
-  "http://127.0.0.1:8000/skills/${SLUG}/versions"
+  "http://127.0.0.1:8000/skills/${SLUG}"
 
 curl -H 'Authorization: Bearer reader-token' \
-  "http://127.0.0.1:8000/skills/${SLUG}/versions/${VERSION}"
+  "http://127.0.0.1:8000/skills/${SLUG}"
 curl -H 'Authorization: Bearer reader-token' \
-  "http://127.0.0.1:8000/skills/${SLUG}/versions/${VERSION}/content"
+  "http://127.0.0.1:8000/skills/${SLUG}/${VERSION}"
+curl -H 'Authorization: Bearer reader-token' \
+  "http://127.0.0.1:8000/skills/${SLUG}/${VERSION}/content"
 curl -H 'Authorization: Bearer reader-token' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -193,5 +195,5 @@ curl -X PATCH \
   -H 'Authorization: Bearer admin-token' \
   -H 'Content-Type: application/json' \
   -d '{"status":"deprecated","note":"Grafana dashboard exercise"}' \
-  "http://127.0.0.1:8000/skills/${SLUG}/versions/${VERSION}/status"
+  "http://127.0.0.1:8000/skills/${SLUG}/${VERSION}/status"
 ```

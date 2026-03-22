@@ -1,7 +1,11 @@
 """Compatibility re-export for skill API DTOs."""
 
 from app.interface.dto.skills_discovery import SkillDiscoveryRequest, SkillDiscoveryResponse
-from app.interface.dto.skills_fetch import SkillVersionMetadataResponse
+from app.interface.dto.skills_fetch import (
+    SkillVersionListResponse,
+    SkillVersionMetadataResponse,
+    SkillVersionSummaryResponse,
+)
 from app.interface.dto.skills_lifecycle import (
     SkillVersionStatusResponse,
     SkillVersionStatusUpdateRequest,
@@ -43,10 +47,12 @@ __all__ = [
     "SkillMetadataResponse",
     "SkillVersionContentRequest",
     "SkillVersionCreateRequest",
+    "SkillVersionListResponse",
     "SkillVersionMetadataRequest",
     "SkillVersionMetadataResponse",
     "SkillVersionRelationshipsRequest",
     "SkillVersionStatusResponse",
     "SkillVersionStatusUpdateRequest",
+    "SkillVersionSummaryResponse",
     "TrustContextResponse",
 ]

@@ -44,12 +44,13 @@ READINESS_STATUS = Gauge(
 )
 
 _ROUTE_TO_SURFACE: dict[tuple[str, str], str] = {
-    ("POST", "/skills/{slug}/versions"): "publish",
+    ("POST", "/skills/{slug}"): "publish",
     ("POST", "/discovery"): "discovery",
+    ("GET", "/skills/{slug}"): "list",
     ("GET", "/resolution/{slug}/{version}"): "resolution",
-    ("GET", "/skills/{slug}/versions/{version}"): "metadata",
-    ("GET", "/skills/{slug}/versions/{version}/content"): "content",
-    ("PATCH", "/skills/{slug}/versions/{version}/status"): "lifecycle",
+    ("GET", "/skills/{slug}/{version}"): "metadata",
+    ("GET", "/skills/{slug}/{version}/content"): "content",
+    ("PATCH", "/skills/{slug}/{version}/status"): "lifecycle",
 }
 _SYSTEM_ROUTES = frozenset({"/metrics", "/healthz", "/readyz"})
 

@@ -3,7 +3,7 @@ name: Publish Skill v1
 order: 6000
 
 method: POST
-url: "{{baseUrl}}/skills/{{sanity_primary_slug}}/versions"
+url: "{{baseUrl}}/skills/{{sanity_primary_slug}}"
 
 headers:
   - key: Accept

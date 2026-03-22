@@ -32,10 +32,10 @@ flowchart LR
         subgraph Interface["Interface Layer"]
             direction LR
             Health["GET /healthz<br/>GET /readyz<br/>GET /metrics"]
-            Publish["POST /skills/{slug}/versions<br/>PATCH lifecycle status"]
+            Publish["POST /skills/{slug}<br/>PATCH lifecycle status"]
             Discovery["POST /discovery<br/>ordered slug candidates"]
             Resolution["GET /resolution/{slug}/{version}<br/>exact first-degree reads"]
-            Fetch["GET /skills/{slug}/versions/{version}<br/>GET /content"]
+            Fetch["GET /skills/{slug}<br/>GET /skills/{slug}/{version}<br/>GET /content"]
         end
 
         subgraph Core["Core Layer"]

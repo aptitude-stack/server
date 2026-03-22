@@ -143,6 +143,17 @@ class StoredSkillVersionContent:
 
 
 @dataclass(frozen=True, slots=True)
+class StoredSkillVersionSummary:
+    """Stored summary projection for identity-level version listings."""
+
+    slug: str
+    version: str
+    lifecycle_status: LifecycleStatus
+    trust_tier: TrustTier
+    published_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
 class StoredSkillRelationshipSource:
     """Stored relationship-source projection for batch relationship reads."""
 
@@ -246,6 +257,9 @@ class SkillVersionReadPort(Protocol):
         version: str,
     ) -> StoredSkillVersionContent | None:
         """Return one raw markdown content row for an exact immutable version."""
+
+    def list_versions(self, *, slug: str) -> tuple[StoredSkillVersionSummary, ...]:
+        """Return stored version summaries for one skill identity."""
 
 
 class SkillSearchPort(Protocol):
