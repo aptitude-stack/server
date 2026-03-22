@@ -10,7 +10,7 @@ description: >-
   Skills API.
 
     - Sanity: covers health, readiness, metrics, authenticated publish, lifecycle
-      updates, exact fetch, discovery, and resolution
+      updates, version listing, exact fetch, discovery, and resolution
     - Negative: covers authenticated validation, duplicate, and exact-read path
       errors
 

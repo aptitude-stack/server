@@ -8,22 +8,29 @@ from fastapi import APIRouter, Path, Request, Response, status
 from fastapi.responses import JSONResponse
 
 from app.core.dependencies import ReadCallerDep, SkillFetchServiceDep
-from app.core.skills.models import SkillVersionNotFoundError
+from app.core.skills.models import SkillNotFoundError, SkillVersionNotFoundError
 from app.interface.api.errors import error_response
 from app.interface.api.response_docs import (
     ApiResponses,
     invalid_request_response,
+    skill_not_found_response,
     skill_version_not_found_response,
 )
-from app.interface.api.skill_api_support_fetch import to_metadata_response
-from app.interface.dto.examples import SKILL_VERSION_METADATA_RESPONSE_EXAMPLE
-from app.interface.dto.skills_fetch import SkillVersionMetadataResponse
+from app.interface.api.skill_api_support_fetch import to_metadata_response, to_version_list_response
+from app.interface.dto.examples import (
+    SKILL_VERSION_LIST_RESPONSE_EXAMPLE,
+    SKILL_VERSION_METADATA_RESPONSE_EXAMPLE,
+)
+from app.interface.dto.skills_fetch import SkillVersionListResponse, SkillVersionMetadataResponse
 from app.interface.validation import SEMVER_PATTERN, SLUG_PATTERN
 
 router = APIRouter(tags=["fetch"])
 
 NOT_FOUND_RESPONSE = skill_version_not_found_response(
     description="The requested immutable `slug@version` does not exist."
+)
+SKILL_NOT_FOUND_RESPONSE = skill_not_found_response(
+    description="The requested skill slug does not exist or has no visible versions."
 )
 PATH_VALIDATION_ERROR_RESPONSE = invalid_request_response(
     description="The path parameters are invalid."
@@ -53,9 +60,51 @@ CONTENT_RESPONSES: ApiResponses = {
     **PATH_VALIDATION_ERROR_RESPONSE,
 }
 
+LIST_RESPONSES: ApiResponses = {
+    status.HTTP_200_OK: {
+        "description": "Visible immutable versions returned successfully.",
+        "content": {"application/json": {"example": SKILL_VERSION_LIST_RESPONSE_EXAMPLE}},
+    },
+    **SKILL_NOT_FOUND_RESPONSE,
+    **PATH_VALIDATION_ERROR_RESPONSE,
+}
+
 
 @router.get(
-    "/skills/{slug}/versions/{version}",
+    "/skills/{slug}",
+    operation_id="listImmutableVersions",
+    summary="List visible immutable versions",
+    description="Return the visible immutable versions for one skill identity.",
+    response_model=SkillVersionListResponse,
+    response_model_exclude_unset=True,
+    responses=LIST_RESPONSES,
+)
+def list_skill_versions(
+    request: Request,
+    slug: Annotated[
+        str,
+        Path(pattern=SLUG_PATTERN, description="Stable public slug of the requested skill."),
+    ],
+    fetch_service: SkillFetchServiceDep,
+    caller: ReadCallerDep,
+) -> SkillVersionListResponse | JSONResponse:
+    """Return the visible immutable versions for one skill identity."""
+    try:
+        detail = fetch_service.list_versions(caller=caller, slug=slug)
+    except SkillNotFoundError as exc:
+        return error_response(
+            request=request,
+            status_code=status.HTTP_404_NOT_FOUND,
+            code="SKILL_NOT_FOUND",
+            message=str(exc),
+            details={"slug": exc.slug},
+        )
+
+    return to_version_list_response(detail)
+
+
+@router.get(
+    "/skills/{slug}/{version}",
     operation_id="getImmutableMetadata",
     summary="Fetch immutable metadata",
     description="Return the immutable metadata envelope for one exact `slug@version`.",
@@ -99,7 +148,7 @@ def get_version_metadata(
 
 
 @router.get(
-    "/skills/{slug}/versions/{version}/content",
+    "/skills/{slug}/{version}/content",
     operation_id="getImmutableContent",
     summary="Fetch immutable markdown content",
     description="Return the immutable markdown body for one exact `slug@version`.",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from sqlalchemy import select, tuple_
+from sqlalchemy import select, text, tuple_
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.governance import LifecycleStatus, TrustTier
@@ -13,6 +13,7 @@ from app.core.ports import (
     StoredSkillRelationshipSource,
     StoredSkillVersion,
     StoredSkillVersionContent,
+    StoredSkillVersionSummary,
 )
 from app.persistence.models.skill import Skill
 from app.persistence.models.skill_version import SkillVersion
@@ -61,6 +62,34 @@ class SkillRegistryReadMixin(SkillRegistryRepositoryBase):
                 size_bytes=item.content.storage_size_bytes,
                 lifecycle_status=cast(LifecycleStatus, item.lifecycle_status),
                 trust_tier=cast(TrustTier, item.trust_tier),
+            )
+
+    def list_versions(self, *, slug: str) -> tuple[StoredSkillVersionSummary, ...]:
+        with self._session_factory() as session:
+            statement = (
+                select(SkillVersion)
+                .join(Skill, Skill.id == SkillVersion.skill_fk)
+                .options(joinedload(SkillVersion.skill))
+                .where(Skill.slug == slug)
+                .order_by(
+                    text(
+                        "CASE skill_versions.lifecycle_status "
+                        "WHEN 'published' THEN 0 WHEN 'deprecated' THEN 1 ELSE 2 END"
+                    ),
+                    SkillVersion.published_at.desc(),
+                    SkillVersion.id.desc(),
+                )
+            )
+            rows = session.execute(statement).scalars().all()
+            return tuple(
+                StoredSkillVersionSummary(
+                    slug=item.skill.slug,
+                    version=item.version,
+                    lifecycle_status=cast(LifecycleStatus, item.lifecycle_status),
+                    trust_tier=cast(TrustTier, item.trust_tier),
+                    published_at=item.published_at,
+                )
+                for item in rows
             )
 
     def get_relationship_sources_batch(

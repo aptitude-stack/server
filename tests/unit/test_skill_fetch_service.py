@@ -12,9 +12,13 @@ from app.core.governance import (
     PolicyViolation,
     build_default_policy_profile,
 )
-from app.core.ports import StoredSkillVersion, StoredSkillVersionContent
+from app.core.ports import (
+    StoredSkillVersion,
+    StoredSkillVersionContent,
+    StoredSkillVersionSummary,
+)
 from app.core.skills.fetch import SkillFetchService
-from app.core.skills.models import SkillVersionNotFoundError
+from app.core.skills.models import SkillNotFoundError, SkillVersionNotFoundError
 
 
 class FakeAuditRecorder:
@@ -36,9 +40,11 @@ class FakeVersionReader:
         *,
         version: StoredSkillVersion | None = None,
         content: StoredSkillVersionContent | None = None,
+        versions: tuple[StoredSkillVersionSummary, ...] = (),
     ) -> None:
         self._version = version
         self._content = content
+        self._versions = versions
 
     def get_version(self, *, slug: str, version: str) -> StoredSkillVersion | None:
         if self._version is None:
@@ -58,6 +64,11 @@ class FakeVersionReader:
         if (self._content.slug, self._content.version) != (slug, version):
             return None
         return self._content
+
+    def list_versions(self, *, slug: str) -> tuple[StoredSkillVersionSummary, ...]:
+        if any(item.slug != slug for item in self._versions):
+            return ()
+        return self._versions
 
 
 def _governance_policy() -> GovernancePolicy:
@@ -102,6 +113,21 @@ def _stored_content(*, lifecycle_status: str = "published") -> StoredSkillVersio
         size_bytes=len(b"# Python Lint\n"),
         lifecycle_status=lifecycle_status,
         trust_tier="internal",
+    )
+
+
+def _stored_version_summary(
+    version: str,
+    *,
+    lifecycle_status: str = "published",
+    published_at: datetime | None = None,
+) -> StoredSkillVersionSummary:
+    return StoredSkillVersionSummary(
+        slug="python.lint",
+        version=version,
+        lifecycle_status=lifecycle_status,
+        trust_tier="internal",
+        published_at=published_at or datetime(2026, 3, 13, 9, 0, tzinfo=UTC),
     )
 
 
@@ -180,3 +206,70 @@ def test_get_content_applies_exact_read_policy() -> None:
         )
 
     assert audit_recorder.events == ["skill.version_exact_read_denied"]
+
+
+@pytest.mark.unit
+def test_list_versions_returns_visible_versions_with_current_default_first() -> None:
+    audit_recorder = FakeAuditRecorder()
+    service = SkillFetchService(
+        version_reader=FakeVersionReader(
+            versions=(
+                _stored_version_summary("2.0.0", lifecycle_status="published"),
+                _stored_version_summary(
+                    "1.0.0",
+                    lifecycle_status="deprecated",
+                    published_at=datetime(2026, 3, 12, 9, 0, tzinfo=UTC),
+                ),
+            )
+        ),
+        audit_recorder=audit_recorder,
+        governance_policy=_governance_policy(),
+    )
+
+    result = service.list_versions(caller=_caller("read"), slug="python.lint")
+
+    assert result.slug == "python.lint"
+    assert [item.version for item in result.versions] == ["2.0.0", "1.0.0"]
+    assert result.versions[0].is_current_default is True
+    assert result.versions[1].is_current_default is False
+    assert audit_recorder.events == ["skill.version_list_read"]
+
+
+@pytest.mark.unit
+def test_list_versions_hides_fully_invisible_skills() -> None:
+    service = SkillFetchService(
+        version_reader=FakeVersionReader(
+            versions=(
+                _stored_version_summary("1.0.0", lifecycle_status="archived"),
+            )
+        ),
+        audit_recorder=FakeAuditRecorder(),
+        governance_policy=_governance_policy(),
+    )
+
+    with pytest.raises(SkillNotFoundError):
+        service.list_versions(caller=_caller("read"), slug="python.lint")
+
+
+@pytest.mark.unit
+def test_list_versions_includes_archived_versions_for_admin_without_marking_default() -> None:
+    service = SkillFetchService(
+        version_reader=FakeVersionReader(
+            versions=(
+                _stored_version_summary("2.0.0", lifecycle_status="archived"),
+                _stored_version_summary(
+                    "1.0.0",
+                    lifecycle_status="deprecated",
+                    published_at=datetime(2026, 3, 12, 9, 0, tzinfo=UTC),
+                ),
+            )
+        ),
+        audit_recorder=FakeAuditRecorder(),
+        governance_policy=_governance_policy(),
+    )
+
+    result = service.list_versions(caller=_caller("admin"), slug="python.lint")
+
+    assert [item.version for item in result.versions] == ["1.0.0", "2.0.0"]
+    assert result.versions[0].is_current_default is True
+    assert result.versions[1].is_current_default is False

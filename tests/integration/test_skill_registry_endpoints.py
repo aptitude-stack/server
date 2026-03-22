@@ -80,7 +80,7 @@ def _publish(
     *,
     token: str = "publisher-token",
 ) -> dict[str, object]:
-    response = client.post(f"/skills/{slug}/versions", json=payload, headers=_headers(token))
+    response = client.post(f"/skills/{slug}", json=payload, headers=_headers(token))
     assert response.status_code == 201, response.text
     return response.json()
 
@@ -95,7 +95,7 @@ def _update_status(
     note: str | None = None,
 ) -> dict[str, object]:
     response = client.patch(
-        f"/skills/{slug}/versions/{version}/status",
+        f"/skills/{slug}/{version}/status",
         json={"status": status, "note": note},
         headers=_headers(token),
     )
@@ -206,12 +206,16 @@ def test_publish_discovery_resolution_and_exact_fetch(
             f"/resolution/{source_slug}/2.0.0",
             headers=_headers("reader-token"),
         )
+        versions = client.get(
+            f"/skills/{source_slug}",
+            headers=_headers("reader-token"),
+        )
         metadata = client.get(
-            f"/skills/{source_slug}/versions/2.0.0",
+            f"/skills/{source_slug}/2.0.0",
             headers=_headers("reader-token"),
         )
         content = client.get(
-            f"/skills/{source_slug}/versions/2.0.0/content",
+            f"/skills/{source_slug}/2.0.0/content",
             headers=_headers("reader-token"),
         )
 
@@ -234,6 +238,20 @@ def test_publish_discovery_resolution_and_exact_fetch(
                 "version_constraint": None,
                 "optional": None,
                 "markers": [],
+            }
+        ],
+    }
+
+    assert versions.status_code == 200
+    assert versions.json() == {
+        "slug": source_slug,
+        "versions": [
+            {
+                "version": "2.0.0",
+                "lifecycle_status": "published",
+                "trust_tier": "internal",
+                "published_at": published["published_at"],
+                "is_current_default": True,
             }
         ],
     }
@@ -277,7 +295,7 @@ def test_publish_rejects_rendered_summary_field(
         payload["content"]["rendered_summary"] = "Legacy summary field"
 
         response = client.post(
-            "/skills/python.legacy-summary/versions",
+            "/skills/python.legacy-summary",
             json=payload,
             headers=_headers("publisher-token"),
         )
@@ -336,11 +354,11 @@ def test_exact_fetch_returns_not_found_for_missing_coordinates(
 
     with TestClient(create_app()) as client:
         metadata = client.get(
-            "/skills/python.missing/versions/9.9.9",
+            "/skills/python.missing/9.9.9",
             headers=_headers("reader-token"),
         )
         content = client.get(
-            "/skills/python.missing/versions/9.9.9/content",
+            "/skills/python.missing/9.9.9/content",
             headers=_headers("reader-token"),
         )
 
@@ -380,7 +398,7 @@ def test_publish_distinct_content_creates_distinct_rows_and_exact_fetch_returns_
             ),
         )
         response = client.get(
-            f"/skills/{slug}/versions/2.0.0/content",
+            f"/skills/{slug}/2.0.0/content",
             headers=_headers("reader-token"),
         )
 
@@ -406,14 +424,14 @@ def test_authentication_and_scope_failures_are_enforced(
     payload = _request("1.0.0", intent="create_skill")
 
     with TestClient(create_app()) as client:
-        missing = client.post(f"/skills/{slug}/versions", json=payload)
+        missing = client.post(f"/skills/{slug}", json=payload)
         invalid = client.post(
-            f"/skills/{slug}/versions",
+            f"/skills/{slug}",
             json=payload,
             headers=_headers("not-a-real-token"),
         )
         insufficient = client.post(
-            f"/skills/{slug}/versions",
+            f"/skills/{slug}",
             json=payload,
             headers=_headers("reader-token"),
         )
@@ -442,12 +460,12 @@ def test_publish_enforces_trust_tier_policy(
 
     with TestClient(create_app()) as client:
         internal_without_provenance = client.post(
-            f"/skills/python.internal.{suffix}/versions",
+            f"/skills/python.internal.{suffix}",
             json=_request("1.0.0", trust_tier="internal"),
             headers=_headers("publisher-token"),
         )
         verified_without_admin = client.post(
-            f"/skills/python.verified.{suffix}/versions",
+            f"/skills/python.verified.{suffix}",
             json=_request(
                 "1.0.0",
                 intent="create_skill",
@@ -461,7 +479,7 @@ def test_publish_enforces_trust_tier_policy(
             headers=_headers("publisher-token"),
         )
         verified_with_admin = client.post(
-            f"/skills/python.verified-admin.{suffix}/versions",
+            f"/skills/python.verified-admin.{suffix}",
             json=_request(
                 "1.0.0",
                 intent="create_skill",
@@ -498,7 +516,7 @@ def test_status_transitions_recompute_current_default(
         deprecated = _update_status(client, slug=slug, version="2.0.0", status="deprecated")
         archived = _update_status(client, slug=slug, version="1.0.0", status="archived")
         invalid_transition = client.patch(
-            f"/skills/{slug}/versions/1.0.0/status",
+            f"/skills/{slug}/1.0.0/status",
             json={"status": "published"},
             headers=_headers("admin-token"),
         )
@@ -587,20 +605,28 @@ def test_governance_applies_to_discovery_resolution_and_exact_fetch(
             f"/resolution/{archived_slug}/1.0.0",
             headers=_headers("admin-token"),
         )
+        archived_versions_forbidden = client.get(
+            f"/skills/{archived_slug}",
+            headers=_headers("reader-token"),
+        )
+        archived_versions_admin = client.get(
+            f"/skills/{archived_slug}",
+            headers=_headers("admin-token"),
+        )
         archived_metadata_forbidden = client.get(
-            f"/skills/{archived_slug}/versions/1.0.0",
+            f"/skills/{archived_slug}/1.0.0",
             headers=_headers("reader-token"),
         )
         archived_metadata_admin = client.get(
-            f"/skills/{archived_slug}/versions/1.0.0",
+            f"/skills/{archived_slug}/1.0.0",
             headers=_headers("admin-token"),
         )
         archived_content_forbidden = client.get(
-            f"/skills/{archived_slug}/versions/1.0.0/content",
+            f"/skills/{archived_slug}/1.0.0/content",
             headers=_headers("reader-token"),
         )
         archived_content_admin = client.get(
-            f"/skills/{archived_slug}/versions/1.0.0/content",
+            f"/skills/{archived_slug}/1.0.0/content",
             headers=_headers("admin-token"),
         )
 
@@ -616,6 +642,19 @@ def test_governance_applies_to_discovery_resolution_and_exact_fetch(
     assert archived_resolution_forbidden.json()["error"]["code"] == "POLICY_EXACT_READ_FORBIDDEN"
     assert archived_resolution_admin.status_code == 200
     assert archived_resolution_admin.json()["slug"] == archived_slug
+
+    assert archived_versions_forbidden.status_code == 404
+    assert archived_versions_forbidden.json()["error"]["code"] == "SKILL_NOT_FOUND"
+    assert archived_versions_admin.status_code == 200
+    assert archived_versions_admin.json()["versions"] == [
+        {
+            "version": "1.0.0",
+            "lifecycle_status": "archived",
+            "trust_tier": "untrusted",
+            "published_at": archived_versions_admin.json()["versions"][0]["published_at"],
+            "is_current_default": False,
+        }
+    ]
 
     assert archived_metadata_forbidden.status_code == 403
     assert archived_metadata_forbidden.json()["error"]["code"] == "POLICY_EXACT_READ_FORBIDDEN"
@@ -690,7 +729,7 @@ def test_publish_rejects_invalid_dependency_constraint(
 
     with TestClient(create_app()) as client:
         response = client.post(
-            f"/skills/{slug}/versions",
+            f"/skills/{slug}",
             json=_request(
                 "1.0.0",
                 intent="create_skill",
@@ -768,22 +807,22 @@ def test_publish_intent_requires_existing_or_missing_slug_as_declared(
 
     with TestClient(create_app()) as client:
         create_skill = client.post(
-            f"/skills/{slug}/versions",
+            f"/skills/{slug}",
             json=_request("1.0.0", intent="create_skill"),
             headers=_headers("publisher-token"),
         )
         create_again = client.post(
-            f"/skills/{slug}/versions",
+            f"/skills/{slug}",
             json=_request("2.0.0", intent="create_skill"),
             headers=_headers("publisher-token"),
         )
         publish_existing = client.post(
-            f"/skills/{slug}/versions",
+            f"/skills/{slug}",
             json=_request("2.0.0", intent="publish_version"),
             headers=_headers("publisher-token"),
         )
         publish_missing = client.post(
-            f"/skills/{slug}.missing/versions",
+            f"/skills/{slug}.missing",
             json=_request("1.0.0", intent="publish_version"),
             headers=_headers("publisher-token"),
         )
@@ -806,7 +845,7 @@ def test_audit_events_cover_publish_discovery_exact_reads_and_lifecycle(
 
     with TestClient(create_app()) as client:
         publish_response = client.post(
-            f"/skills/{slug}/versions",
+            f"/skills/{slug}",
             json=_request(
                 "1.0.0",
                 intent="create_skill",
@@ -821,7 +860,7 @@ def test_audit_events_cover_publish_discovery_exact_reads_and_lifecycle(
             headers=_headers("publisher-token"),
         )
         denied_publish = client.post(
-            f"/skills/{slug}.policy/versions",
+            f"/skills/{slug}.policy",
             json=_request("1.0.0", trust_tier="internal"),
             headers=_headers("publisher-token"),
         )
@@ -834,26 +873,30 @@ def test_audit_events_cover_publish_discovery_exact_reads_and_lifecycle(
             f"/resolution/{slug}/1.0.0",
             headers=_headers("reader-token"),
         )
+        versions = client.get(
+            f"/skills/{slug}",
+            headers=_headers("reader-token"),
+        )
         metadata = client.get(
-            f"/skills/{slug}/versions/1.0.0",
+            f"/skills/{slug}/1.0.0",
             headers=_headers("reader-token"),
         )
         content = client.get(
-            f"/skills/{slug}/versions/1.0.0/content",
+            f"/skills/{slug}/1.0.0/content",
             headers=_headers("reader-token"),
         )
         archived = client.patch(
-            f"/skills/{slug}/versions/1.0.0/status",
+            f"/skills/{slug}/1.0.0/status",
             json={"status": "archived"},
             headers=_headers("admin-token"),
         )
         denied_status = client.patch(
-            f"/skills/{slug}/versions/1.0.0/status",
+            f"/skills/{slug}/1.0.0/status",
             json={"status": "published"},
             headers=_headers("admin-token"),
         )
         denied_metadata = client.get(
-            f"/skills/{slug}/versions/1.0.0",
+            f"/skills/{slug}/1.0.0",
             headers=_headers("reader-token"),
         )
 
@@ -861,6 +904,7 @@ def test_audit_events_cover_publish_discovery_exact_reads_and_lifecycle(
     assert denied_publish.status_code == 403
     assert discovery.status_code == 200
     assert resolution.status_code == 200
+    assert versions.status_code == 200
     assert metadata.status_code == 200
     assert content.status_code == 200
     assert archived.status_code == 200
@@ -874,6 +918,7 @@ def test_audit_events_cover_publish_discovery_exact_reads_and_lifecycle(
     assert "skill.version_publish_denied" in event_types
     assert "skill.search_performed" in event_types
     assert "skill.version_resolution_read" in event_types
+    assert "skill.version_list_read" in event_types
     assert "skill.version_metadata_read" in event_types
     assert "skill.version_content_read" in event_types
     assert "skill.version_status_updated" in event_types

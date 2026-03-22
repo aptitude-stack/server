@@ -2,7 +2,7 @@ $kind: http-request
 order: 4000
 
 method: POST
-url: '{{baseUrl}}/skills/{{sanity_extension_slug}}/versions'
+url: '{{baseUrl}}/skills/{{sanity_extension_slug}}'
 
 headers:
   - key: Accept

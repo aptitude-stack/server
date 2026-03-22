@@ -15,8 +15,11 @@ that infrastructure layers implement.
 - `skills/`: skill-domain bounded context containing publish, discovery, exact
   fetch, resolution, advisory search, shared projections, and skill-domain
   models/errors.
-- `audit_events.py`: typed audit-event builders shared by publish, discovery, fetch, resolution, and lifecycle flows.
-- `ports.py`: protocol contracts for publish, exact version reads, relationship reads, discovery, artifacts, audit, and readiness.
+- `audit_events.py`: typed audit-event builders shared by publish, discovery,
+  list/fetch, resolution, and lifecycle flows.
+- `ports.py`: protocol contracts for publish, identity-level version lists,
+  exact version reads, relationship reads, discovery, artifacts, audit, and
+  readiness.
 - `dependencies.py`: FastAPI dependency providers and typed aliases
   (`SettingsDep`, `ReadinessServiceDep`, `SkillRegistryServiceDep`, `SkillDiscoveryServiceDep`, `SkillResolutionServiceDep`, `SkillFetchServiceDep`) that read process-scoped services from the typed runtime service container at `app.state.services`.
 - `settings.py`: typed environment configuration.
@@ -29,7 +32,8 @@ that infrastructure layers implement.
   graphs, generate locks, or build execution plans.
 - Core discovery remains candidate retrieval only; ranking is advisory and not authoritative for resolver choice.
 - Core resolution returns only direct authored dependency selectors; no transitive traversal or solving belongs here.
-- Core fetch composes PostgreSQL-backed metadata and markdown reads for single exact immutable coordinates.
+- Core fetch composes PostgreSQL-backed identity version lists plus metadata and
+  markdown reads for immutable coordinates.
 - Core publish normalizes publisher-supplied advisory provenance, derives server-owned trust context, and leaves resolver concerns out of the write path.
 - The `skills/` package is an internal grouping inside core, not a separate
   architecture layer; top-level layering remains `interface -> core -> persistence`.

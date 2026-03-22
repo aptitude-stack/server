@@ -2,7 +2,7 @@
 
 ## Symptoms
 
-- `POST /skills/{slug}/versions` returns `4xx` or `5xx`
+- `POST /skills/{slug}` returns `4xx` or `5xx`
 - `aptitude_registry_operation_total{surface="publish",outcome!="success"}` increases
 
 ## Checks
