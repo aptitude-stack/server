@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+DB_BOOT_PATTERN = re.compile(r"docker compose(?: [^\n]+)? up -d db")
+DB_READY_PATTERN = re.compile(
+    r"docker compose(?: [^\n]+)? exec -T db pg_isready -U postgres -d aptitude"
+)
 
 
 @pytest.mark.unit
@@ -19,11 +25,12 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 )
 def test_ci_workflows_boot_runner_tests_from_compose_db(workflow_path: str) -> None:
     document = (REPO_ROOT / workflow_path).read_text()
+    boot_match = DB_BOOT_PATTERN.search(document)
+    ready_match = DB_READY_PATTERN.search(document)
 
     assert "services:" not in document
-    assert "docker compose up -d db" in document
-    assert "docker compose exec -T db pg_isready -U postgres -d aptitude" in document
-    assert document.index("docker compose up -d db") < document.index("uv run alembic upgrade head")
-    assert document.index("docker compose up -d db") < document.index(
-        "uv run --extra dev pytest tests/integration"
-    )
+    assert boot_match is not None
+    assert ready_match is not None
+    assert boot_match.start() < document.index("uv run alembic upgrade head")
+    assert boot_match.start() < document.index("uv run --extra dev pytest tests/integration")
+    assert boot_match.start() < ready_match.start()
