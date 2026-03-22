@@ -12,13 +12,15 @@ changing the top-level server layering.
 - `registry.py`: immutable publish and lifecycle-status service plus related
   domain exports.
 - `discovery.py`: discovery facade for ordered candidate slug retrieval.
-- `fetch.py`: exact immutable metadata and markdown fetch service.
+- `fetch.py`: identity-level version listing plus exact immutable metadata and
+  markdown fetch service.
 - `resolution.py`: exact direct dependency read service for authored
   `depends_on` selectors.
 - `search.py`: advisory search query/result models and implementation reused by
   discovery.
 - `models.py`: skill-domain commands, result models, and domain errors.
-- `projections.py`: stored-to-domain projections for immutable version details.
+- `projections.py`: stored-to-domain projections for immutable version details
+  and version-list summaries.
 - `exact_read.py`: shared exact-read policy and audit orchestration reused by
   fetch and resolution.
 

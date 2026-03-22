@@ -9,6 +9,7 @@ from app.core.audit_events import (
     build_lifecycle_audit_event,
     build_publish_audit_event,
     build_search_audit_event,
+    build_version_list_audit_event,
 )
 from app.core.governance import CallerIdentity, ProvenanceMetadata
 from app.observability.context import clear_request_context, set_request_context
@@ -99,6 +100,22 @@ def test_search_audit_event_keeps_query_values_redacted() -> None:
     assert event.payload is not None
     assert event.payload["surface"] == "discovery"
     assert event.payload["query_present"] is True
+    assert event.payload["result_count"] == 2
+
+
+@pytest.mark.unit
+def test_version_list_audit_event_tracks_slug_and_result_count() -> None:
+    event = build_version_list_audit_event(
+        caller=_caller(),
+        policy_profile="default",
+        slug="python.lint",
+        result_count=2,
+    )
+
+    assert event.event_type == "skill.version_list_read"
+    assert event.payload is not None
+    assert event.payload["surface"] == "list"
+    assert event.payload["slug"] == "python.lint"
     assert event.payload["result_count"] == 2
 
 

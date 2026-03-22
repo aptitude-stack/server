@@ -2,7 +2,7 @@
 
 ## Symptoms
 
-- `GET /skills/{slug}/versions/{version}` or `/content` fails
+- `GET /skills/{slug}`, `GET /skills/{slug}/{version}`, or `.../content` fails
 - fetch latency/error panels spike
 
 ## Checks

@@ -14,7 +14,8 @@ description: |-
     7. Publish Skill v1
     8. Publish Skill v2
     9. Update Skill Version Status
-    10. Fetch Published Skill Metadata
-    11. Fetch Published Skill Content
-    12. Discover Published Skill Candidates
-    13. Resolve Published Skill Dependencies
+    10. List Published Skill Versions
+    11. Fetch Published Skill Metadata
+    12. Fetch Published Skill Content
+    13. Discover Published Skill Candidates
+    14. Resolve Published Skill Dependencies

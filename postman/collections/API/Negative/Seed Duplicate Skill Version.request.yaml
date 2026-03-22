@@ -2,7 +2,7 @@ $kind: http-request
 order: 1500
 
 method: POST
-url: '{{baseUrl}}/skills/{{negative_duplicate_slug}}/versions'
+url: '{{baseUrl}}/skills/{{negative_duplicate_slug}}'
 
 headers:
   - key: Accept

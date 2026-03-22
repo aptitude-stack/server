@@ -98,19 +98,20 @@ In practice, this means one noisy workload does not distort the others.
 Discovery traffic does not force content reads, and content reads do not bloat
 dependency-resolution paths.
 
-## Frozen Route Surface
+## Route Surface
 
 The public HTTP baseline is:
 
 - `GET /healthz`
 - `GET /readyz`
 - `GET /metrics`
-- `POST /skills/{slug}/versions`
+- `POST /skills/{slug}`
 - `POST /discovery`
+- `GET /skills/{slug}`
 - `GET /resolution/{slug}/{version}`
-- `GET /skills/{slug}/versions/{version}`
-- `GET /skills/{slug}/versions/{version}/content`
-- `PATCH /skills/{slug}/versions/{version}/status`
+- `GET /skills/{slug}/{version}`
+- `GET /skills/{slug}/{version}/content`
+- `PATCH /skills/{slug}/{version}/status`
 
 Use [docs/project/api-contract.md](docs/project/api-contract.md) as the
 canonical contract. Historical milestone docs may mention pre-freeze routes;
@@ -134,8 +135,8 @@ fetch still returns immutable markdown.
 
 | Schema Area | Backing Table | Purpose | Returned By |
 | --- | --- | --- | --- |
-| Metadata | `skill_metadata` | Stores the structured, queryable skill description used for discovery and exact metadata reads. | `GET /skills/{slug}/versions/{version}` |
-| Content | `skill_contents` | Stores the immutable markdown body, checksum digest, and size metadata for exact content fetches. | `GET /skills/{slug}/versions/{version}/content` |
+| Metadata | `skill_metadata` | Stores the structured, queryable skill description used for discovery and exact metadata reads. | `GET /skills/{slug}/{version}` |
+| Content | `skill_contents` | Stores the immutable markdown body, checksum digest, and size metadata for exact content fetches. | `GET /skills/{slug}/{version}/content` |
 | Version Binding | `skill_versions` | Binds one immutable version to one metadata row and one content row, plus lifecycle/trust/provenance state. | Publish + exact metadata reads |
 | Relationship Selectors | `skill_relationship_selectors` | Preserves authored `depends_on` and other selector families exactly as published. | `GET /resolution/{slug}/{version}` |
 | Search Projection | `skill_search_documents` | Derived discovery read model used for lexical search and deterministic candidate ordering. | `POST /discovery` |

@@ -27,3 +27,20 @@ class SkillVersionMetadataResponse(BaseModel):
     trust_tier: TrustTier
     provenance: ProvenanceResponse | None = None
     published_at: datetime
+
+
+class SkillVersionSummaryResponse(BaseModel):
+    """Identity-level summary for one immutable version."""
+
+    version: str
+    lifecycle_status: LifecycleStatus
+    trust_tier: TrustTier
+    published_at: datetime
+    is_current_default: bool
+
+
+class SkillVersionListResponse(BaseModel):
+    """Visible immutable versions for one skill identity."""
+
+    slug: str
+    versions: list[SkillVersionSummaryResponse]

@@ -17,8 +17,8 @@ adapter layer between FastAPI and core services.
 - `discovery.py`: body-based candidate lookup route at `/discovery`.
 - `resolution.py`: exact first-degree dependency read route at
   `/resolution/{slug}/{version}`.
-- `fetch.py`: exact immutable metadata and markdown fetch routes under
-  `/skills/{slug}/versions/{version}`.
+- `fetch.py`: identity-level version listing plus exact immutable metadata and
+  markdown fetch routes under `/skills/{slug}` and `/skills/{slug}/{version}`.
 - `skills.py`: publish and lifecycle-status routes.
 - `errors.py`: stable JSON error envelope helpers and FastAPI exception
   handlers.
@@ -37,14 +37,15 @@ adapter layer between FastAPI and core services.
   service is not ready.
 - `POST /discovery`: discovery-only candidate lookup returning ordered slug
   candidates.
+- `GET /skills/{slug}`: visible immutable versions for one skill identity.
 - `GET /resolution/{slug}/{version}`: direct authored `depends_on`
   declarations for one immutable version.
-- `GET /skills/{slug}/versions/{version}`: immutable metadata fetch for one
+- `GET /skills/{slug}/{version}`: immutable metadata fetch for one
   exact coordinate.
-- `GET /skills/{slug}/versions/{version}/content`: immutable markdown fetch for
+- `GET /skills/{slug}/{version}/content`: immutable markdown fetch for
   one exact coordinate.
-- `POST /skills/{slug}/versions`: immutable skill version publication.
-- `PATCH /skills/{slug}/versions/{version}/status`: lifecycle-status transition
+- `POST /skills/{slug}`: immutable skill version publication.
+- `PATCH /skills/{slug}/{version}/status`: lifecycle-status transition
   for one immutable version.
 
 ## Notes
@@ -62,7 +63,7 @@ The `skill_api_support_*.py` modules are split by API surface so route handlers
 reuse mapping code without collecting every conversion function in one file.
 `response_docs.py` centralizes repeated OpenAPI response fragments so request
 validation and exact-version-not-found responses stay consistent across routes.
-`POST /skills/{slug}/versions` requires `intent=create_skill|publish_version`
+`POST /skills/{slug}` requires `intent=create_skill|publish_version`
 so the API can distinguish first publication from publication to an existing
 skill slug.
 `POST /discovery` is candidate generation only and does not choose final
@@ -72,6 +73,8 @@ it does not expand transitive graphs or select versions for constraints.
 The exact fetch routes intentionally separate immutable metadata from markdown
 bytes so metadata reads stay JSON-oriented while raw content reads preserve
 cache-friendly markdown delivery headers.
+`GET /skills/{slug}` returns a summary list only; callers still use the exact
+metadata/content routes for per-version detail.
 Publisher-supplied provenance may appear only on publish/exact metadata
 responses as advisory data; discovery, resolution, and raw content routes remain
 independent of Git, filesystem, or publisher-side state.

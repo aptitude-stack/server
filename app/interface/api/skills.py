@@ -106,7 +106,7 @@ STATUS_RESPONSES: ApiResponses = {
 
 
 @router.post(
-    "/skills/{slug}/versions",
+    "/skills/{slug}",
     operation_id="createSkillVersion",
     summary="Publish an immutable skill version",
     description=(
@@ -173,7 +173,7 @@ def create_skill_version(
 
 
 @router.patch(
-    "/skills/{slug}/versions/{version}/status",
+    "/skills/{slug}/{version}/status",
     operation_id="updateSkillVersionStatus",
     summary="Update immutable version lifecycle status",
     description="Transition the lifecycle state for one immutable skill version.",

@@ -2,7 +2,7 @@ $kind: http-request
 order: 7500
 
 method: PATCH
-url: '{{baseUrl}}/skills/{{sanity_primary_slug}}/versions/{{sanity_version_2}}/status'
+url: '{{baseUrl}}/skills/{{sanity_primary_slug}}/{{sanity_version_2}}/status'
 
 headers:
   - key: Accept
@@ -43,5 +43,5 @@ scripts:
       });
 
       pm.execution.setNextRequest(
-        pm.response.code === 200 ? 'Fetch Published Skill Metadata' : null,
+        pm.response.code === 200 ? 'List Published Skill Versions' : null,
       );

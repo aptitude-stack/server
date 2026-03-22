@@ -82,6 +82,26 @@ SKILL_VERSION_METADATA_RESPONSE_EXAMPLE = {
     "published_at": "2026-03-10T08:30:00Z",
 }
 
+SKILL_VERSION_LIST_RESPONSE_EXAMPLE = {
+    "slug": "python.lint",
+    "versions": [
+        {
+            "version": "2.0.0",
+            "lifecycle_status": "published",
+            "trust_tier": "internal",
+            "published_at": "2026-03-10T08:30:00Z",
+            "is_current_default": True,
+        },
+        {
+            "version": "1.2.3",
+            "lifecycle_status": "deprecated",
+            "trust_tier": "internal",
+            "published_at": "2026-03-08T08:30:00Z",
+            "is_current_default": False,
+        },
+    ],
+}
+
 DISCOVERY_REQUEST_EXAMPLE = {
     "name": "Python Lint",
     "description": "Lint Python files consistently",

@@ -8,8 +8,14 @@ from app.core.skills.models import (
     SkillChecksum,
     SkillMetadata,
     SkillVersionDetail,
+    SkillVersionList,
+    SkillVersionSummary,
 )
-from app.interface.dto.skills_fetch import SkillVersionMetadataResponse
+from app.interface.dto.skills_fetch import (
+    SkillVersionListResponse,
+    SkillVersionMetadataResponse,
+    SkillVersionSummaryResponse,
+)
 from app.interface.dto.skills_shared import (
     ChecksumResponse,
     ProvenanceResponse,
@@ -31,6 +37,14 @@ def to_metadata_response(detail: SkillVersionDetail) -> SkillVersionMetadataResp
         trust_tier=detail.trust_tier,
         provenance=_provenance_response(detail.provenance, trust_tier=detail.trust_tier),
         published_at=detail.published_at,
+    )
+
+
+def to_version_list_response(detail: SkillVersionList) -> SkillVersionListResponse:
+    """Convert a core list projection into the public identity-level list schema."""
+    return SkillVersionListResponse(
+        slug=detail.slug,
+        versions=[_version_summary_response(item) for item in detail.versions],
     )
 
 
@@ -59,6 +73,16 @@ def _metadata_response(metadata: SkillMetadata) -> SkillMetadataResponse:
         token_estimate=metadata.token_estimate,
         maturity_score=metadata.maturity_score,
         security_score=metadata.security_score,
+    )
+
+
+def _version_summary_response(summary: SkillVersionSummary) -> SkillVersionSummaryResponse:
+    return SkillVersionSummaryResponse(
+        version=summary.version,
+        lifecycle_status=summary.lifecycle_status,
+        trust_tier=summary.trust_tier,
+        published_at=summary.published_at,
+        is_current_default=summary.is_current_default,
     )
 
 

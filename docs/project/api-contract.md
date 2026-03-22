@@ -18,23 +18,24 @@ Public routes:
 - `GET /healthz`
 - `GET /readyz`
 - `GET /metrics`
-- `POST /skills/{slug}/versions`
+- `POST /skills/{slug}`
 - `POST /discovery`
+- `GET /skills/{slug}`
 - `GET /resolution/{slug}/{version}`
-- `GET /skills/{slug}/versions/{version}`
-- `GET /skills/{slug}/versions/{version}/content`
-- `PATCH /skills/{slug}/versions/{version}/status`
+- `GET /skills/{slug}/{version}`
+- `GET /skills/{slug}/{version}/content`
+- `PATCH /skills/{slug}/{version}/status`
 
 ## Freeze Rule
 
-This route set is the frozen public registry baseline for Plans 09-15.
+This route set is the current public registry baseline.
 
 - `GET /metrics` is an operational endpoint for Prometheus-compatible scraping and does not widen the frozen registry-business route families.
 - Resolution remains a first-class public exact-read surface.
-- Exact fetch stays singular and coordinate-based through:
-  - `GET /skills/{slug}/versions/{version}`
-  - `GET /skills/{slug}/versions/{version}/content`
-- Later milestones may refine payload fields, headers, and policy behavior inside this route set, but they do not add sibling public read route families or compatibility aliases.
+- Identity reads stay on `GET /skills/{slug}`, while exact coordinate reads stay on:
+  - `GET /skills/{slug}/{version}`
+  - `GET /skills/{slug}/{version}/content`
+- Later milestones may refine payload fields, headers, and policy behavior inside this route set, but they should not reintroduce deleted route aliases.
 - The server remains execution-agnostic: discovery returns candidate slugs, resolution returns direct authored `depends_on`, and exact fetch returns immutable metadata or markdown for one coordinate.
 
 ## Auth, Headers, And Errors
@@ -127,12 +128,13 @@ Discovery, resolution, and raw content reads do not depend on provenance.
 | `GET` | `/healthz` | none | `200` | Liveness probe |
 | `GET` | `/readyz` | none | `200` or `503` | Dependency readiness probe |
 | `GET` | `/metrics` | none | `200` | Prometheus-compatible operational metrics |
-| `POST` | `/skills/{slug}/versions` | `publish` | `201` | Publish one immutable `slug@version` |
+| `POST` | `/skills/{slug}` | `publish` | `201` | Publish one immutable `slug@version` |
 | `POST` | `/discovery` | `read` | `200` | Returns ordered candidate `slug` values only |
+| `GET` | `/skills/{slug}` | `read` | `200` | Returns visible immutable versions for one skill identity |
 | `GET` | `/resolution/{slug}/{version}` | `read` | `200` | Returns direct authored `depends_on` only |
-| `GET` | `/skills/{slug}/versions/{version}` | `read` | `200` | Returns immutable metadata for one exact coordinate |
-| `GET` | `/skills/{slug}/versions/{version}/content` | `read` | `200` | Returns immutable markdown with cache headers |
-| `PATCH` | `/skills/{slug}/versions/{version}/status` | `admin` | `200` | Transitions lifecycle state |
+| `GET` | `/skills/{slug}/{version}` | `read` | `200` | Returns immutable metadata for one exact coordinate |
+| `GET` | `/skills/{slug}/{version}/content` | `read` | `200` | Returns immutable markdown with cache headers |
+| `PATCH` | `/skills/{slug}/{version}/status` | `admin` | `200` | Transitions lifecycle state |
 
 ## Route Semantics
 
@@ -190,7 +192,35 @@ Rules:
 - No recursion, solving, or transitive expansion.
 - No `extends`, `conflicts_with`, or `overlaps_with` in the response.
 
-### `GET /skills/{slug}/versions/{version}`
+### `GET /skills/{slug}`
+
+Returns the visible immutable versions for one skill identity.
+
+Response:
+
+```json
+{
+  "slug": "python.lint",
+  "versions": [
+    {
+      "version": "2.0.0",
+      "lifecycle_status": "published",
+      "trust_tier": "internal",
+      "published_at": "2026-03-10T08:30:00Z",
+      "is_current_default": true
+    }
+  ]
+}
+```
+
+Rules:
+
+- Identity read only; it does not inline full metadata or markdown.
+- Missing slugs, or slugs with no versions visible to the caller, return `404`.
+- Read policy matches exact fetch visibility: `published` and `deprecated` are readable with `read`; `archived` is admin-only.
+- Ordering is current-default first, then remaining visible versions by canonical version ordering.
+
+### `GET /skills/{slug}/{version}`
 
 Returns the immutable metadata envelope for one exact coordinate.
 
@@ -202,7 +232,7 @@ Rules:
 - Advisory provenance may be returned when it was captured at publish time.
 - Read policy matches exact resolution rules: `published` and `deprecated` are readable with `read`; `archived` is admin-only.
 
-### `GET /skills/{slug}/versions/{version}/content`
+### `GET /skills/{slug}/{version}/content`
 
 Returns the immutable markdown body for one exact coordinate as
 `text/markdown; charset=utf-8`.
@@ -230,7 +260,7 @@ Rules:
 - Unauthenticated in-app; protect exposure with deployment and network controls.
 - Includes bounded HTTP and registry-operation metrics plus readiness gauges.
 
-### `POST /skills/{slug}/versions`
+### `POST /skills/{slug}`
 
 Publishes one immutable `slug@version` with:
 
@@ -253,7 +283,7 @@ Notes:
 - `trust_context` is server-derived and must not be supplied by clients.
 - Success returns metadata only, not embedded markdown or relationship graphs.
 
-### `PATCH /skills/{slug}/versions/{version}/status`
+### `PATCH /skills/{slug}/{version}/status`
 
 Transitions one immutable version between `published`, `deprecated`, and
 `archived`.

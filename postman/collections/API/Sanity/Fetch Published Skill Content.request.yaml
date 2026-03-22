@@ -2,7 +2,7 @@ $kind: http-request
 order: 9000
 
 method: GET
-url: '{{baseUrl}}/skills/{{sanity_primary_slug}}/versions/{{sanity_version_2}}/content'
+url: '{{baseUrl}}/skills/{{sanity_primary_slug}}/{{sanity_version_2}}/content'
 
 headers:
   - key: Accept

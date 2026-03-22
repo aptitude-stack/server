@@ -24,7 +24,7 @@
 
 - **Current Status**:
   - FastAPI service is implemented with PostgreSQL-backed publish, discovery, public resolution, exact fetch, lifecycle, auth, and audit paths.
-  - The current HTTP surface uses concrete routes such as `POST /skills/{slug}/versions`, `POST /discovery`, and `GET /skills/{slug}/versions/{version}`.
+  - The current HTTP surface uses concrete routes such as `POST /skills/{slug}`, `POST /discovery`, `GET /skills/{slug}`, and `GET /skills/{slug}/{version}`.
   - Digest-backed `ETag` emission on exact content fetch is implemented.
   - Full conditional-read behavior with `If-None-Match` returning `304 Not Modified` is not yet documented as implemented behavior.
 - **Planned State**:
@@ -66,7 +66,7 @@
 ### Current Status vs Planned State (March 15, 2026)
 
 - **Current Status**:
-  - Publish is implemented at `POST /skills/{slug}/versions`.
+  - Publish is implemented at `POST /skills/{slug}`.
   - Discovery is implemented at `POST /discovery`.
   - Immutable metadata and content fetch are implemented as exact `GET` routes.
   - Direct dependency reads are implemented at `GET /resolution/{slug}/{version}`.

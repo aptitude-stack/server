@@ -132,7 +132,7 @@ def test_publish_flow_stitches_request_id_into_audit_rows_and_metrics(
 
     with TestClient(create_app()) as client:
         publish = client.post(
-            f"/skills/{slug}/versions",
+            f"/skills/{slug}",
             json=_request("1.0.0"),
             headers=_headers("publisher-token", request_id="req-publish"),
         )

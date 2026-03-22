@@ -13,7 +13,8 @@ Implements core persistence ports for:
 - PostgreSQL metadata persistence (SQLAlchemy)
 - digest-addressed immutable markdown storage in PostgreSQL
 - authored relationship selector preservation for exact dependency reads
-- exact immutable metadata and content lookup for one `slug@version`
+- identity-level version listing plus exact immutable metadata/content lookup
+  for one `slug@version`
 - advisory search read model and indexed candidate retrieval
 - database lifecycle/readiness
 
@@ -26,7 +27,8 @@ Implements core persistence ports for:
 - `skill_registry_repository_base.py`: shared session and helper logic for the
   repository mixins.
 - `skill_registry_repository_writes.py`: publish/write-side repository methods.
-- `skill_registry_repository_reads.py`: exact version/content/relationship read methods.
+- `skill_registry_repository_reads.py`: version-list, exact version/content, and
+  relationship read methods.
 - `skill_registry_repository_search.py`: advisory search candidate retrieval.
 - `skill_registry_repository_status.py`: lifecycle-status update methods.
 - `skill_registry_repository_support.py`: shared projections, query helpers, and

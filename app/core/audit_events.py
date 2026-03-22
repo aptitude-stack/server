@@ -105,6 +105,25 @@ def build_search_audit_event(
     return AuditEventRecord(event_type="skill.search_performed", payload=search_payload)
 
 
+def build_version_list_audit_event(
+    *,
+    caller: CallerIdentity,
+    policy_profile: str,
+    slug: str,
+    result_count: int,
+) -> AuditEventRecord:
+    """Return an identity-level version list audit event."""
+    payload = _base_payload(
+        caller=caller,
+        policy_profile=policy_profile,
+        outcome="allowed",
+        slug=slug,
+        surface="list",
+    )
+    payload["result_count"] = result_count
+    return AuditEventRecord(event_type="skill.version_list_read", payload=payload)
+
+
 def build_exact_read_audit_event(
     *,
     caller: CallerIdentity,

@@ -23,12 +23,13 @@ def test_public_route_surface_exposes_exact_get_fetch_routes() -> None:
     routes = _routes()
 
     assert ("/metrics", "GET") in routes
-    assert ("/skills/{slug}/versions", "POST") in routes
+    assert ("/skills/{slug}", "POST") in routes
+    assert ("/skills/{slug}", "GET") in routes
     assert ("/discovery", "POST") in routes
     assert ("/resolution/{slug}/{version}", "GET") in routes
-    assert ("/skills/{slug}/versions/{version}", "GET") in routes
-    assert ("/skills/{slug}/versions/{version}/content", "GET") in routes
-    assert ("/skills/{slug}/versions/{version}/status", "PATCH") in routes
+    assert ("/skills/{slug}/{version}", "GET") in routes
+    assert ("/skills/{slug}/{version}/content", "GET") in routes
+    assert ("/skills/{slug}/{version}/status", "PATCH") in routes
 
 
 @pytest.mark.unit
@@ -40,8 +41,11 @@ def test_public_route_surface_excludes_removed_route_families() -> None:
     assert ("/resolution/relationships:batch", "POST") not in routes
     assert ("/fetch/metadata:batch", "POST") not in routes
     assert ("/fetch/content:batch", "POST") not in routes
-    assert ("/skills/{slug}", "GET") not in routes
+    assert ("/skills/{slug}/versions", "POST") not in routes
     assert ("/skills/{slug}/versions", "GET") not in routes
+    assert ("/skills/{slug}/versions/{version}", "GET") not in routes
+    assert ("/skills/{slug}/versions/{version}/content", "GET") not in routes
+    assert ("/skills/{slug}/versions/{version}/status", "PATCH") not in routes
 
 
 @pytest.mark.unit
@@ -53,21 +57,22 @@ def test_openapi_contract_matches_exact_get_fetch_routes() -> None:
     assert "/metrics" in paths
     assert "/discovery" in paths
     assert "/resolution/{slug}/{version}" in paths
-    assert "/skills/{slug}/versions" in paths
-    assert "/skills/{slug}/versions/{version}" in paths
-    assert "/skills/{slug}/versions/{version}/content" in paths
+    assert "/skills/{slug}" in paths
+    assert "/skills/{slug}/{version}" in paths
+    assert "/skills/{slug}/{version}/content" in paths
     assert "get" in paths["/metrics"]
-    assert "post" in paths["/skills/{slug}/versions"]
+    assert "post" in paths["/skills/{slug}"]
+    assert "get" in paths["/skills/{slug}"]
     assert "post" in paths["/discovery"]
     assert "get" in paths["/resolution/{slug}/{version}"]
-    assert "get" in paths["/skills/{slug}/versions/{version}"]
-    assert "get" in paths["/skills/{slug}/versions/{version}/content"]
+    assert "get" in paths["/skills/{slug}/{version}"]
+    assert "get" in paths["/skills/{slug}/{version}/content"]
     assert "/skill-versions" not in paths
     assert "/discovery/skills/search" not in paths
     assert "/resolution/relationships:batch" not in paths
     assert "/fetch/metadata:batch" not in paths
     assert "/fetch/content:batch" not in paths
-    assert "/skills/{slug}" not in paths
+    assert "/skills/{slug}/versions" not in paths
     assert "intent" in request_schema["properties"]
     assert "intent" in request_schema["required"]
     assert "slug" not in request_schema["properties"]

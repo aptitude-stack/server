@@ -129,6 +129,25 @@ class SkillVersionDetail:
 
 
 @dataclass(frozen=True, slots=True)
+class SkillVersionSummary:
+    """Identity-level summary for one immutable version."""
+
+    version: str
+    lifecycle_status: LifecycleStatus
+    trust_tier: TrustTier
+    published_at: datetime
+    is_current_default: bool
+
+
+@dataclass(frozen=True, slots=True)
+class SkillVersionList:
+    """Visible immutable versions for one skill identity."""
+
+    slug: str
+    versions: tuple[SkillVersionSummary, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class SkillVersionStatusUpdate:
     """Lifecycle update result returned by the registry API."""
 

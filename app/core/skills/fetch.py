@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.core.audit_events import build_version_list_audit_event
 from app.core.governance import CallerIdentity, GovernancePolicy
 from app.core.ports import AuditPort, SkillVersionReadPort
 
@@ -10,10 +11,18 @@ from .models import (
     SHA256_ALGORITHM,
     SkillChecksum,
     SkillContentDocument,
+    SkillNotFoundError,
     SkillVersionDetail,
+    SkillVersionList,
     SkillVersionNotFoundError,
 )
-from .projections import to_skill_version_detail
+from .projections import to_skill_version_detail, to_skill_version_summary
+
+_LIST_LIFECYCLE_PRIORITY = {
+    "published": 0,
+    "deprecated": 1,
+    "archived": 2,
+}
 
 
 class SkillFetchService:
@@ -90,3 +99,63 @@ class SkillFetchService:
             size_bytes=stored.size_bytes,
         )
         return document
+
+    def list_versions(
+        self,
+        *,
+        caller: CallerIdentity,
+        slug: str,
+    ) -> SkillVersionList:
+        """Return visible immutable versions for one skill identity."""
+        stored_versions = self._version_reader.list_versions(slug=slug)
+        if not stored_versions:
+            raise SkillNotFoundError(slug=slug)
+
+        visible_versions = tuple(
+            stored
+            for stored in stored_versions
+            if self._governance_policy.is_visible_in_list(
+                caller=caller,
+                lifecycle_status=stored.lifecycle_status,
+            )
+        )
+        if not visible_versions:
+            raise SkillNotFoundError(slug=slug)
+
+        visible_versions = tuple(
+            sorted(
+                visible_versions,
+                key=lambda stored: (
+                    _LIST_LIFECYCLE_PRIORITY[stored.lifecycle_status],
+                    -stored.published_at.timestamp(),
+                    stored.version,
+                ),
+            )
+        )
+
+        current_default_version = next(
+            (
+                stored.version
+                for stored in visible_versions
+                if stored.lifecycle_status in ("published", "deprecated")
+            ),
+            None,
+        )
+        versions = tuple(
+            to_skill_version_summary(
+                stored=stored,
+                is_current_default=stored.version == current_default_version,
+            )
+            for stored in visible_versions
+        )
+        audit_event = build_version_list_audit_event(
+            caller=caller,
+            policy_profile=self._governance_policy.profile_name,
+            slug=slug,
+            result_count=len(versions),
+        )
+        self._audit_recorder.record_event(
+            event_type=audit_event.event_type,
+            payload=audit_event.payload,
+        )
+        return SkillVersionList(slug=slug, versions=versions)

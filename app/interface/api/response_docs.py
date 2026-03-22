@@ -9,6 +9,7 @@ from fastapi import status
 from app.interface.dto.errors import ErrorEnvelope
 from app.interface.dto.examples import (
     INVALID_REQUEST_ERROR_EXAMPLE,
+    SKILL_NOT_FOUND_ERROR_EXAMPLE,
     SKILL_VERSION_NOT_FOUND_ERROR_EXAMPLE,
 )
 
@@ -33,5 +34,16 @@ def skill_version_not_found_response(*, description: str) -> ApiResponses:
             "model": ErrorEnvelope,
             "description": description,
             "content": {"application/json": {"example": SKILL_VERSION_NOT_FOUND_ERROR_EXAMPLE}},
+        }
+    }
+
+
+def skill_not_found_response(*, description: str) -> ApiResponses:
+    """Return the shared skill-identity 404 response fragment."""
+    return {
+        status.HTTP_404_NOT_FOUND: {
+            "model": ErrorEnvelope,
+            "description": description,
+            "content": {"application/json": {"example": SKILL_NOT_FOUND_ERROR_EXAMPLE}},
         }
     }

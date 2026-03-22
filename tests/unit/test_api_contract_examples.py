@@ -17,6 +17,7 @@ from app.interface.dto.examples import (
     RESOLUTION_RESPONSE_EXAMPLE,
     SKILL_ALREADY_EXISTS_ERROR_EXAMPLE,
     SKILL_NOT_FOUND_ERROR_EXAMPLE,
+    SKILL_VERSION_LIST_RESPONSE_EXAMPLE,
     SKILL_VERSION_METADATA_RESPONSE_EXAMPLE,
     SKILL_VERSION_NOT_FOUND_ERROR_EXAMPLE,
     SKILL_VERSION_STATUS_RESPONSE_EXAMPLE,
@@ -26,6 +27,7 @@ from app.interface.dto.skills import (
     SkillDiscoveryRequest,
     SkillDiscoveryResponse,
     SkillVersionCreateRequest,
+    SkillVersionListResponse,
     SkillVersionMetadataResponse,
     SkillVersionStatusResponse,
 )
@@ -52,6 +54,7 @@ def test_discovery_request_example_matches_request_contract() -> None:
 @pytest.mark.parametrize(
     ("payload", "model"),
     [
+        (SKILL_VERSION_LIST_RESPONSE_EXAMPLE, SkillVersionListResponse),
         (SKILL_VERSION_METADATA_RESPONSE_EXAMPLE, SkillVersionMetadataResponse),
         (DISCOVERY_RESPONSE_EXAMPLE, SkillDiscoveryResponse),
         (RESOLUTION_RESPONSE_EXAMPLE, SkillDependencyResolutionResponse),

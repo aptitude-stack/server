@@ -32,7 +32,7 @@ client.test("readyz returns 200", function () {
 ###
 
 ### Publish one immutable version
-POST {{host}}/skills/{{slug}}/versions
+POST {{host}}/skills/{{slug}}
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer {{publisherToken}}
@@ -107,8 +107,21 @@ client.test("resolution returns 200", function () {
 
 ###
 
+### List immutable versions
+GET {{host}}/skills/{{slug}}
+Accept: application/json
+Authorization: Bearer {{readerToken}}
+
+> {%
+client.test("version list returns 200", function () {
+  client.assert(response.status === 200, "Expected 200, got " + response.status + ": " + response.body);
+});
+%}
+
+###
+
 ### Fetch immutable metadata
-GET {{host}}/skills/{{slug}}/versions/{{version}}
+GET {{host}}/skills/{{slug}}/{{version}}
 Accept: application/json
 Authorization: Bearer {{readerToken}}
 
@@ -121,7 +134,7 @@ client.test("metadata fetch returns 200", function () {
 ###
 
 ### Fetch immutable markdown content
-GET {{host}}/skills/{{slug}}/versions/{{version}}/content
+GET {{host}}/skills/{{slug}}/{{version}}/content
 Accept: text/markdown
 Authorization: Bearer {{readerToken}}
 
@@ -134,7 +147,7 @@ client.test("content fetch returns 200", function () {
 ###
 
 ### Update lifecycle status
-PATCH {{host}}/skills/{{slug}}/versions/{{version}}/status
+PATCH {{host}}/skills/{{slug}}/{{version}}/status
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer {{adminToken}}
