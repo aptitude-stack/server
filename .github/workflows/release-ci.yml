@@ -18,6 +18,7 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  BUILDKIT_PROGRESS: plain
   IMAGE_NAME: ${{ vars.DOCKER_IMAGE != '' && vars.DOCKER_IMAGE || 'y0ncha/aptitude-server' }}
 
 jobs:

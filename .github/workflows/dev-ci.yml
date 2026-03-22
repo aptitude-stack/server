@@ -10,6 +10,7 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  BUILDKIT_PROGRESS: plain
 
 jobs:
   dev-pr-gate:
@@ -52,14 +53,14 @@ jobs:
 
       - name: Start compose database
         run: |
-          docker compose up -d db
+          docker compose --ansi=never --progress=plain up -d db
           for attempt in $(seq 1 30); do
-            if docker compose exec -T db pg_isready -U postgres -d aptitude >/dev/null 2>&1; then
+            if docker compose --ansi=never --progress=plain exec -T db pg_isready -U postgres -d aptitude >/dev/null 2>&1; then
               break
             fi
             sleep 1
           done
-          docker compose exec -T db pg_isready -U postgres -d aptitude
+          docker compose --ansi=never --progress=plain exec -T db pg_isready -U postgres -d aptitude
 
       - name: Run database migrations
         run: uv run alembic upgrade head
@@ -76,16 +77,16 @@ jobs:
             check config /etc/prometheus/prometheus.yml
 
       - name: Validate observability compose profile
-        run: docker compose --profile observability config >/dev/null
+        run: docker compose --ansi=never --progress=plain --profile observability config >/dev/null
 
       - name: Build app image for smoke test
-        run: docker buildx build --load --platform linux/amd64 --tag y0ncha/aptitude-server:latest .
+        run: docker buildx build --progress=plain --load --platform linux/amd64 --tag y0ncha/aptitude-server:latest .
 
       - name: Container smoke test
         run: |
-          APP_IMAGE=y0ncha/aptitude-server:latest docker compose --profile observability up -d db
-          APP_IMAGE=y0ncha/aptitude-server:latest docker compose --profile observability run --rm migrate
-          APP_IMAGE=y0ncha/aptitude-server:latest docker compose --profile observability up -d server observability
+          APP_IMAGE=y0ncha/aptitude-server:latest docker compose --ansi=never --progress=plain --profile observability up -d db
+          APP_IMAGE=y0ncha/aptitude-server:latest docker compose --ansi=never --progress=plain --profile observability run --rm migrate
+          APP_IMAGE=y0ncha/aptitude-server:latest docker compose --ansi=never --progress=plain --profile observability up -d server observability
           for attempt in $(seq 1 30); do
             if curl --silent --fail http://127.0.0.1:8000/healthz >/dev/null 2>&1; then
               break
@@ -127,4 +128,4 @@ jobs:
 
       - name: Tear down compose services
         if: always()
-        run: docker compose --profile observability down -v
+        run: docker compose --ansi=never --progress=plain --profile observability down -v
