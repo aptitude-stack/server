@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from typing import cast
 
 from app.core.audit_events import build_lifecycle_audit_event, build_publish_audit_event
@@ -117,36 +118,46 @@ class SkillRegistryService:
         if self._registry.version_exists(slug=command.slug, version=command.version):
             raise DuplicateSkillVersionError(slug=command.slug, version=command.version)
 
-        content_bytes = command.content.raw_markdown.encode("utf-8")
-        checksum_digest = hashlib.sha256(content_bytes).hexdigest()
+        content_record = ContentRecordInput(
+            raw_markdown=command.content.raw_markdown,
+            size_bytes=len(command.content.raw_markdown.encode("utf-8")),
+            checksum_digest=_content_checksum_digest(command.content),
+        )
+        metadata_record = MetadataRecordInput(
+            name=command.metadata.name,
+            description=command.metadata.description,
+            tags=command.metadata.tags,
+            headers=command.metadata.headers,
+            inputs_schema=command.metadata.inputs_schema,
+            outputs_schema=command.metadata.outputs_schema,
+            token_estimate=command.metadata.token_estimate,
+            maturity_score=command.metadata.maturity_score,
+            security_score=command.metadata.security_score,
+        )
+        governance_record = GovernanceRecordInput(
+            trust_tier=normalized_governance.trust_tier,
+            provenance=normalized_governance.provenance,
+        )
+        relationship_records = _to_relationship_record_inputs(command.relationships)
+        version_checksum_digest = _version_checksum_digest(
+            slug=command.slug,
+            version=command.version,
+            content_checksum_digest=content_record.checksum_digest,
+            metadata=metadata_record,
+            governance=governance_record,
+            relationships=relationship_records,
+        )
 
         try:
             stored = self._registry.create_version(
                 record=CreateSkillVersionRecord(
                     slug=command.slug,
                     version=command.version,
-                    content=ContentRecordInput(
-                        raw_markdown=command.content.raw_markdown,
-                        size_bytes=len(content_bytes),
-                        checksum_digest=checksum_digest,
-                    ),
-                    metadata=MetadataRecordInput(
-                        name=command.metadata.name,
-                        description=command.metadata.description,
-                        tags=command.metadata.tags,
-                        headers=command.metadata.headers,
-                        inputs_schema=command.metadata.inputs_schema,
-                        outputs_schema=command.metadata.outputs_schema,
-                        token_estimate=command.metadata.token_estimate,
-                        maturity_score=command.metadata.maturity_score,
-                        security_score=command.metadata.security_score,
-                    ),
-                    governance=GovernanceRecordInput(
-                        trust_tier=normalized_governance.trust_tier,
-                        provenance=normalized_governance.provenance,
-                    ),
-                    relationships=_to_relationship_record_inputs(command.relationships),
-                    version_checksum_digest=checksum_digest,
+                    content=content_record,
+                    metadata=metadata_record,
+                    governance=governance_record,
+                    relationships=relationship_records,
+                    version_checksum_digest=version_checksum_digest,
                 ),
                 audit_events=(
                     build_publish_audit_event(
@@ -204,14 +215,7 @@ class SkillRegistryService:
             messages.append(str(cause))
 
         combined = " ".join(messages).lower()
-
-        # Heuristics: look for typical uniqueness indicators and the slug field name.
-        has_unique_indicator = any(
-            token in combined for token in ("unique", "duplicate", "constraint")
-        )
-        mentions_slug = "slug" in combined
-
-        return has_unique_indicator and mentions_slug
+        return "uq_skills_slug" in combined
 
     def update_version_status(
         self,
@@ -308,3 +312,77 @@ def _to_relationship_record_inputs(
                 )
             )
     return tuple(rows)
+
+
+def _content_checksum_digest(content: SkillContentInput) -> str:
+    return _sha256_hexdigest(content.raw_markdown.encode("utf-8"))
+
+
+def _version_checksum_digest(
+    *,
+    slug: str,
+    version: str,
+    content_checksum_digest: str,
+    metadata: MetadataRecordInput,
+    governance: GovernanceRecordInput,
+    relationships: tuple[RelationshipSelectorRecordInput, ...],
+) -> str:
+    payload = {
+        "slug": slug,
+        "version": version,
+        "content_checksum_digest": content_checksum_digest,
+        "metadata": {
+            "name": metadata.name,
+            "description": metadata.description,
+            "tags": list(metadata.tags),
+            "headers": metadata.headers,
+            "inputs_schema": metadata.inputs_schema,
+            "outputs_schema": metadata.outputs_schema,
+            "token_estimate": metadata.token_estimate,
+            "maturity_score": metadata.maturity_score,
+            "security_score": metadata.security_score,
+        },
+        "governance": {
+            "trust_tier": governance.trust_tier,
+            "provenance": (
+                None
+                if governance.provenance is None
+                else {
+                    "repo_url": governance.provenance.repo_url,
+                    "commit_sha": governance.provenance.commit_sha,
+                    "tree_path": governance.provenance.tree_path,
+                    "publisher_identity": governance.provenance.publisher_identity,
+                    "policy_profile": governance.provenance.policy_profile,
+                }
+            ),
+        },
+        "relationships": _version_checksum_relationships(relationships),
+    }
+    canonical_json = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return _sha256_hexdigest(canonical_json.encode("utf-8"))
+
+
+def _version_checksum_relationships(
+    relationships: tuple[RelationshipSelectorRecordInput, ...],
+) -> dict[str, list[dict[str, object]]]:
+    grouped: dict[str, list[dict[str, object]]] = {
+        "depends_on": [],
+        "extends": [],
+        "conflicts_with": [],
+        "overlaps_with": [],
+    }
+    for item in relationships:
+        grouped[item.edge_type].append(
+            {
+                "slug": item.slug,
+                "version": item.version,
+                "version_constraint": item.version_constraint,
+                "optional": item.optional,
+                "markers": list(item.markers),
+            }
+        )
+    return grouped
+
+
+def _sha256_hexdigest(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()

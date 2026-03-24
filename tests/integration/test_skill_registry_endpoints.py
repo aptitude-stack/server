@@ -336,6 +336,7 @@ def test_publish_reuses_digest_backed_content_rows_for_identical_content(
     counts = _query_storage_counts(migrated_registry_database, slug=slug)
 
     assert first["content"]["checksum"]["digest"] == second["content"]["checksum"]["digest"]
+    assert first["version_checksum"]["digest"] != second["version_checksum"]["digest"]
     assert first["provenance"] is None
     assert second["provenance"] is None
     assert counts == {

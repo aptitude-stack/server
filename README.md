@@ -172,7 +172,7 @@ Requirements:
 Local dev:
 
 ```bash
-make db-up
+make observability-up
 uv venv
 source .venv/bin/activate
 uv sync --extra dev

@@ -58,6 +58,7 @@ These docs provide background or future-looking ideas. Treat them as context, no
 
 - [docs/project/aptitude-project-high-level-design.md](project/aptitude-project-high-level-design.md)
 - [docs/drafts/publisher-server-resolver-architecture.md](drafts/publisher-server-resolver-architecture.md)
+- [docs/drafts/json-to-toon-migration.md](drafts/json-to-toon-migration.md)
 - [docs/drafts/semantic-search-architecture.md](drafts/semantic-search-architecture.md)
 - [docs/diagrams/aptitude-server-architecture.md](diagrams/aptitude-server-architecture.md)
 

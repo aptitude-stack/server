@@ -17,6 +17,7 @@ from app.core.governance import (
 from app.core.ports import (
     AuditEventRecord,
     CreateSkillVersionRecord,
+    SkillRegistryPersistenceError,
     StoredSkillVersion,
     StoredSkillVersionStatus,
 )
@@ -30,6 +31,10 @@ from app.core.skills.registry import (
     SkillRegistryService,
     SkillRelationshipsInput,
 )
+
+
+class _SlugConflictCause(Exception):
+    """Synthetic DB cause carrying the skills.slug constraint name."""
 
 
 class FakeRegistry:
@@ -139,6 +144,23 @@ class FakeAuditRecorder:
         self.events.append(event_type)
 
 
+class SlugConflictRegistry(FakeRegistry):
+    """Registry stub that simulates a slug uniqueness race during persistence."""
+
+    def create_version(
+        self,
+        *,
+        record: CreateSkillVersionRecord,
+        audit_events: tuple[AuditEventRecord, ...] = (),
+    ) -> StoredSkillVersion:
+        del record, audit_events
+        raise SkillRegistryPersistenceError(
+            "Failed to persist immutable skill version."
+        ) from _SlugConflictCause(
+            'duplicate key value violates unique constraint "uq_skills_slug"'
+        )
+
+
 def _command(
     slug: str,
     version: str,
@@ -187,6 +209,60 @@ def test_publish_version_returns_checksum_and_records_audit() -> None:
     assert response.version_checksum.algorithm == "sha256"
     assert response.content.size_bytes == len(b"# Python Lint\n")
     assert "skill.version_published" in [event.event_type for event in registry.audit_events]
+
+
+@pytest.mark.unit
+def test_publish_version_uses_stable_checksum_for_same_immutable_payload() -> None:
+    first_service = SkillRegistryService(
+        registry=FakeRegistry(),
+        audit_recorder=FakeAuditRecorder(),
+        governance_policy=_governance_policy(),
+    )
+    second_service = SkillRegistryService(
+        registry=FakeRegistry(),
+        audit_recorder=FakeAuditRecorder(),
+        governance_policy=_governance_policy(),
+    )
+    command = _command(slug="python.lint", version="1.0.0")
+
+    first = first_service.publish_version(caller=_publish_caller(), command=command)
+    second = second_service.publish_version(caller=_publish_caller(), command=command)
+
+    assert first.content.checksum.digest == second.content.checksum.digest
+    assert first.version_checksum.digest == second.version_checksum.digest
+
+
+@pytest.mark.unit
+def test_publish_version_distinguishes_version_checksum_from_content_checksum() -> None:
+    registry = FakeRegistry()
+    service = SkillRegistryService(
+        registry=registry,
+        audit_recorder=FakeAuditRecorder(),
+        governance_policy=_governance_policy(),
+    )
+
+    first = service.publish_version(
+        caller=_publish_caller(),
+        command=_command(slug="python.lint", version="1.0.0"),
+    )
+    second = service.publish_version(
+        caller=_publish_caller(),
+        command=CreateSkillVersionCommand(
+            slug="python.lint",
+            intent="publish_version",
+            version="2.0.0",
+            content=SkillContentInput(raw_markdown="# Python Lint\n"),
+            metadata=SkillMetadataInput(
+                name="Python Lint v2",
+                description="Linting skill with richer metadata",
+                tags=("python", "lint", "quality"),
+            ),
+            relationships=SkillRelationshipsInput(),
+        ),
+    )
+
+    assert first.content.checksum.digest == second.content.checksum.digest
+    assert first.version_checksum.digest != second.version_checksum.digest
 
 
 @pytest.mark.unit
@@ -281,3 +357,18 @@ def test_publish_version_denied_by_policy_records_audit_event() -> None:
 
     assert exc_info.value.code == "POLICY_PROVENANCE_INVALID"
     assert "skill.version_publish_denied" in audit_recorder.events
+
+
+@pytest.mark.unit
+def test_publish_version_maps_slug_uniqueness_race_to_skill_already_exists() -> None:
+    service = SkillRegistryService(
+        registry=SlugConflictRegistry(),
+        audit_recorder=FakeAuditRecorder(),
+        governance_policy=_governance_policy(),
+    )
+
+    with pytest.raises(SkillAlreadyExistsError):
+        service.publish_version(
+            caller=_publish_caller(),
+            command=_command(slug="python.race", version="1.0.0"),
+        )
