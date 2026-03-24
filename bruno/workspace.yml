@@ -1,0 +1,33 @@
+opencollection: 1.0.0
+info:
+  name: "Aptitude"
+  type: workspace
+
+collections:
+  - name: "Positive"
+    path: "collections/Positive"
+  - name: "Negative"
+    path: "collections/Negative"
+
+specs:
+  - name: "Aptitude OpenAPI"
+    path: "specs/aptitude-openapi.json"
+
+docs: |-
+  # aptitude-server
+
+  `aptitude-server` is the authoritative registry backend in the Aptitude ecosystem.
+  It persists immutable skill metadata, digest-addressed markdown content, lifecycle
+  state, provenance snapshots, and audit data in PostgreSQL.
+
+  The server owns data-local work: publication, discovery candidate generation,
+  direct authored dependency reads, exact metadata/content fetches, governance,
+  audit, and operational telemetry. Resolver/client components own decision-local
+  work such as reranking, dependency solving, and execution planning.
+
+  Canonical references:
+  - API contract: `docs/project/api-contract.md`
+  - Documentation hub: `docs/README.md`
+  - OpenAPI spec: `specs/aptitude-openapi.json`
+
+activeEnvironmentUid: 108f0w000000000000000
