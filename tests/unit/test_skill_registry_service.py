@@ -156,9 +156,7 @@ class SlugConflictRegistry(FakeRegistry):
         del record, audit_events
         raise SkillRegistryPersistenceError(
             "Failed to persist immutable skill version."
-        ) from _SlugConflictCause(
-            'duplicate key value violates unique constraint "uq_skills_slug"'
-        )
+        ) from _SlugConflictCause('duplicate key value violates unique constraint "uq_skills_slug"')
 
 
 def _command(

@@ -1,40 +1,76 @@
 info:
   name: Readyz
   type: http
-  seq: 2000
+  seq: 2
+
 http:
   method: GET
-  url: '{{baseUrl}}/readyz'
+  url: "{{baseUrl}}/readyz"
   headers:
-  - name: Accept
-    value: application/json
+    - name: Accept
+      value: application/json
+
 runtime:
   scripts:
-  - type: before-request
-    code: "const requestName = 'Readyz';\nconst resetFlowStarts = new Set(['Healthz',\
-      \ 'Publish Invalid Request']);\n\nconst setDefault = (name, value) => {\n  const\
-      \ current = bru.getVar(name);\n  if (typeof current === 'undefined' || current\
-      \ === null || current === '') {\n    bru.setVar(name, value);\n  }\n};\n\nsetDefault('sanity_version_1',\
-      \ '1.0.0');\nsetDefault('sanity_version_2', '2.0.0');\nsetDefault('negative_missing_version',\
-      \ '9.9.9');\nsetDefault('invalid_slug', 'invalid slug');\nsetDefault('invalid_version',\
-      \ 'not-a-semver');\nsetDefault('sanity_dependency_slug', '');\nsetDefault('sanity_extension_slug',\
-      \ '');\nsetDefault('sanity_overlap_slug', '');\nsetDefault('sanity_primary_slug',\
-      \ '');\nsetDefault('negative_invalid_slug', '');\nsetDefault('negative_duplicate_slug',\
-      \ '');\nsetDefault('negative_missing_slug', '');\nsetDefault('sanity_primary_content_digest',\
-      \ '');\n\nlet runId = bru.getVar('runId');\n\nif (resetFlowStarts.has(requestName)\
-      \ || !runId) {\n  runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;\n\
-      \  bru.setVar('runId', runId);\n  bru.setVar('sanity_dependency_slug', `postman.dep.${runId}`);\n\
-      \  bru.setVar('sanity_extension_slug', `postman.ext.${runId}`);\n  bru.setVar('sanity_overlap_slug',\
-      \ `postman.overlap.${runId}`);\n  bru.setVar('sanity_primary_slug', `postman.primary.${runId}`);\n\
-      \  bru.setVar('negative_invalid_slug', `postman.invalid.${runId}`);\n  bru.setVar('negative_duplicate_slug',\
-      \ `postman.duplicate.${runId}`);\n  bru.setVar('negative_missing_slug', `postman.missing.${runId}`);\n\
-      \  bru.setVar('sanity_primary_content_digest', '');\n}"
-  - type: tests
-    code: "test('Status is 200', function () {\n  expect(res.getStatus()).to.equal(200);\n\
-      });\n\ntest('Readyz payload reports database readiness', function () {\n  const\
-      \ json = res.getBody();\n  expect(json.status).to.eql('ready');\n  expect(json.checks).to.be.an('array').and.not.empty;\n\
-      \  expect(\n    json.checks.some((check) => check.name === 'database' && check.status\
-      \ === 'ok'),\n  ).to.eql(true);\n});\n\nbru.runner.setNextRequest(res.getStatus()\
-      \ === 200 ? 'Publish Dependency Skill' : null);"
+    - type: before-request
+      code: |-
+        const requestName = 'Readyz';
+        const resetFlowStarts = new Set(['Healthz', 'Publish Invalid Request']);
+
+        const setDefault = (name, value) => {
+          const current = bru.getVar(name);
+          if (typeof current === 'undefined' || current === null || current === '') {
+            bru.setVar(name, value);
+          }
+        };
+
+        setDefault('sanity_version_1', '1.0.0');
+        setDefault('sanity_version_2', '2.0.0');
+        setDefault('negative_missing_version', '9.9.9');
+        setDefault('invalid_slug', 'invalid slug');
+        setDefault('invalid_version', 'not-a-semver');
+        setDefault('sanity_dependency_slug', '');
+        setDefault('sanity_extension_slug', '');
+        setDefault('sanity_overlap_slug', '');
+        setDefault('sanity_primary_slug', '');
+        setDefault('negative_invalid_slug', '');
+        setDefault('negative_duplicate_slug', '');
+        setDefault('negative_missing_slug', '');
+        setDefault('sanity_primary_content_digest', '');
+
+        let runId = bru.getVar('runId');
+
+        if (resetFlowStarts.has(requestName) || !runId) {
+          runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+          bru.setVar('runId', runId);
+          bru.setVar('sanity_dependency_slug', `postman.dep.${runId}`);
+          bru.setVar('sanity_extension_slug', `postman.ext.${runId}`);
+          bru.setVar('sanity_overlap_slug', `postman.overlap.${runId}`);
+          bru.setVar('sanity_primary_slug', `postman.primary.${runId}`);
+          bru.setVar('negative_invalid_slug', `postman.invalid.${runId}`);
+          bru.setVar('negative_duplicate_slug', `postman.duplicate.${runId}`);
+          bru.setVar('negative_missing_slug', `postman.missing.${runId}`);
+          bru.setVar('sanity_primary_content_digest', '');
+        }
+    - type: tests
+      code: |-
+        test('Status is 200', function () {
+          expect(res.getStatus()).to.equal(200);
+        });
+
+        test('Readyz payload reports database readiness', function () {
+          const json = res.getBody();
+          expect(json.status).to.eql('ready');
+          expect(json.checks).to.be.an('array').and.not.empty;
+          expect(
+            json.checks.some((check) => check.name === 'database' && check.status === 'ok'),
+          ).to.eql(true);
+        });
+
+        bru.runner.setNextRequest(res.getStatus() === 200 ? 'Publish Dependency Skill' : null);
+
 settings:
   encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

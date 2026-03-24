@@ -66,8 +66,7 @@ def test_build_search_document_source_combines_searchable_fields() -> None:
 
 def test_is_duplicate_skill_version_error_matches_only_version_constraint() -> None:
     version_message = (
-        'duplicate key value violates unique constraint '
-        '"uq_skill_versions_skill_fk_version"'
+        'duplicate key value violates unique constraint "uq_skill_versions_skill_fk_version"'
     )
     slug_message = 'duplicate key value violates unique constraint "uq_skills_slug"'
     version_conflict = IntegrityError(

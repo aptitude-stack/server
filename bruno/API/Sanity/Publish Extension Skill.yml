@@ -1,57 +1,115 @@
 info:
   name: Publish Extension Skill
   type: http
-  seq: 4000
+  seq: 5
+
 http:
   method: POST
-  url: '{{baseUrl}}/skills/{{sanity_extension_slug}}'
+  url: "{{baseUrl}}/skills/{{sanity_extension_slug}}"
   headers:
-  - name: Accept
-    value: application/json
-  - name: Content-Type
-    value: application/json
-  - name: Authorization
-    value: Bearer {{publishToken}}
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: Bearer {{publishToken}}
   body:
     type: json
-    data: "{\n  \"intent\": \"create_skill\",\n  \"version\": \"{{sanity_version_1}}\"\
-      ,\n  \"content\": {\n    \"raw_markdown\": \"# Postman Extension Skill\\n\\\
-      nRun `{{runId}}` extension version 1.\\n\"\n  },\n  \"metadata\": {\n    \"\
-      name\": \"Postman Extension Skill\",\n    \"description\": \"Extension seed\
-      \ for relationship coverage\",\n    \"tags\": [\"postman\", \"sanity\", \"extension\"\
-      ],\n    \"headers\": {\n      \"runtime\": \"python\"\n    },\n    \"inputs_schema\"\
-      : {\n      \"type\": \"object\"\n    },\n    \"outputs_schema\": {\n      \"\
-      type\": \"object\"\n    },\n    \"token_estimate\": 120,\n    \"maturity_score\"\
-      : 0.82,\n    \"security_score\": 0.91\n  },\n  \"relationships\": {\n    \"\
-      depends_on\": [],\n    \"extends\": [],\n    \"conflicts_with\": [],\n    \"\
-      overlaps_with\": []\n  }\n}"
+    data: |-
+      {
+        "intent": "create_skill",
+        "version": "{{sanity_version_1}}",
+        "content": {
+          "raw_markdown": "# Postman Extension Skill\n\nRun `{{runId}}` extension version 1.\n"
+        },
+        "metadata": {
+          "name": "Postman Extension Skill",
+          "description": "Extension seed for relationship coverage",
+          "tags": [
+            "postman",
+            "sanity",
+            "extension"
+          ],
+          "headers": {
+            "runtime": "python"
+          },
+          "inputs_schema": {
+            "type": "object"
+          },
+          "outputs_schema": {
+            "type": "object"
+          },
+          "token_estimate": 120,
+          "maturity_score": 0.82,
+          "security_score": 0.91
+        },
+        "relationships": {
+          "depends_on": [],
+          "extends": [],
+          "conflicts_with": [],
+          "overlaps_with": []
+        }
+      }
+
 runtime:
   scripts:
-  - type: before-request
-    code: "const requestName = 'Publish Extension Skill';\nconst resetFlowStarts =\
-      \ new Set(['Healthz', 'Publish Invalid Request']);\n\nconst setDefault = (name,\
-      \ value) => {\n  const current = bru.getVar(name);\n  if (typeof current ===\
-      \ 'undefined' || current === null || current === '') {\n    bru.setVar(name,\
-      \ value);\n  }\n};\n\nsetDefault('sanity_version_1', '1.0.0');\nsetDefault('sanity_version_2',\
-      \ '2.0.0');\nsetDefault('negative_missing_version', '9.9.9');\nsetDefault('invalid_slug',\
-      \ 'invalid slug');\nsetDefault('invalid_version', 'not-a-semver');\nsetDefault('sanity_dependency_slug',\
-      \ '');\nsetDefault('sanity_extension_slug', '');\nsetDefault('sanity_overlap_slug',\
-      \ '');\nsetDefault('sanity_primary_slug', '');\nsetDefault('negative_invalid_slug',\
-      \ '');\nsetDefault('negative_duplicate_slug', '');\nsetDefault('negative_missing_slug',\
-      \ '');\nsetDefault('sanity_primary_content_digest', '');\n\nlet runId = bru.getVar('runId');\n\
-      \nif (resetFlowStarts.has(requestName) || !runId) {\n  runId = `${Date.now()}-${Math.floor(Math.random()\
-      \ * 100000)}`;\n  bru.setVar('runId', runId);\n  bru.setVar('sanity_dependency_slug',\
-      \ `postman.dep.${runId}`);\n  bru.setVar('sanity_extension_slug', `postman.ext.${runId}`);\n\
-      \  bru.setVar('sanity_overlap_slug', `postman.overlap.${runId}`);\n  bru.setVar('sanity_primary_slug',\
-      \ `postman.primary.${runId}`);\n  bru.setVar('negative_invalid_slug', `postman.invalid.${runId}`);\n\
-      \  bru.setVar('negative_duplicate_slug', `postman.duplicate.${runId}`);\n  bru.setVar('negative_missing_slug',\
-      \ `postman.missing.${runId}`);\n  bru.setVar('sanity_primary_content_digest',\
-      \ '');\n}"
-  - type: tests
-    code: "const json = res.getBody();\n\ntest('Status is 201', function () {\n  expect(res.getStatus()).to.equal(201);\n\
-      });\n\ntest('Extension skill publish returns the created version', function\
-      \ () {\n  expect(json.slug).to.eql(bru.getVar('sanity_extension_slug'));\n \
-      \ expect(json.version).to.eql(bru.getVar('sanity_version_1'));\n});\n\nbru.runner.setNextRequest(res.getStatus()\
-      \ === 201 ? 'Publish Overlap Skill' : null);"
+    - type: before-request
+      code: |-
+        const requestName = 'Publish Extension Skill';
+        const resetFlowStarts = new Set(['Healthz', 'Publish Invalid Request']);
+
+        const setDefault = (name, value) => {
+          const current = bru.getVar(name);
+          if (typeof current === 'undefined' || current === null || current === '') {
+            bru.setVar(name, value);
+          }
+        };
+
+        setDefault('sanity_version_1', '1.0.0');
+        setDefault('sanity_version_2', '2.0.0');
+        setDefault('negative_missing_version', '9.9.9');
+        setDefault('invalid_slug', 'invalid slug');
+        setDefault('invalid_version', 'not-a-semver');
+        setDefault('sanity_dependency_slug', '');
+        setDefault('sanity_extension_slug', '');
+        setDefault('sanity_overlap_slug', '');
+        setDefault('sanity_primary_slug', '');
+        setDefault('negative_invalid_slug', '');
+        setDefault('negative_duplicate_slug', '');
+        setDefault('negative_missing_slug', '');
+        setDefault('sanity_primary_content_digest', '');
+
+        let runId = bru.getVar('runId');
+
+        if (resetFlowStarts.has(requestName) || !runId) {
+          runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+          bru.setVar('runId', runId);
+          bru.setVar('sanity_dependency_slug', `postman.dep.${runId}`);
+          bru.setVar('sanity_extension_slug', `postman.ext.${runId}`);
+          bru.setVar('sanity_overlap_slug', `postman.overlap.${runId}`);
+          bru.setVar('sanity_primary_slug', `postman.primary.${runId}`);
+          bru.setVar('negative_invalid_slug', `postman.invalid.${runId}`);
+          bru.setVar('negative_duplicate_slug', `postman.duplicate.${runId}`);
+          bru.setVar('negative_missing_slug', `postman.missing.${runId}`);
+          bru.setVar('sanity_primary_content_digest', '');
+        }
+    - type: tests
+      code: |-
+        const json = res.getBody();
+
+        test('Status is 201', function () {
+          expect(res.getStatus()).to.equal(201);
+        });
+
+        test('Extension skill publish returns the created version', function () {
+          expect(json.slug).to.eql(bru.getVar('sanity_extension_slug'));
+          expect(json.version).to.eql(bru.getVar('sanity_version_1'));
+        });
+
+        bru.runner.setNextRequest(res.getStatus() === 201 ? 'Publish Overlap Skill' : null);
+
 settings:
   encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
