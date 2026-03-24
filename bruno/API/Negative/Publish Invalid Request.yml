@@ -1,0 +1,59 @@
+info:
+  name: Publish Invalid Request
+  type: http
+  seq: 1000
+http:
+  method: POST
+  url: '{{baseUrl}}/skills/{{negative_invalid_slug}}'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{publishToken}}
+  body:
+    type: json
+    data: "{\n  \"intent\": \"create_skill\",\n  \"version\": \"1.0.0\",\n  \"content\"\
+      : {\n    \"raw_markdown\": \"# Invalid Postman Skill\\n\\nThis publish request\
+      \ should fail validation.\\n\",\n    \"rendered_summary\": \"Invalid request\
+      \ payload.\"\n  },\n  \"metadata\": {\n    \"name\": \"Invalid Postman Skill\"\
+      ,\n    \"description\": \"Invalid publish payload for negative coverage\",\n\
+      \    \"tags\": [\"postman\", \"negative\"],\n    \"headers\": {\n      \"runtime\"\
+      : \"python\"\n    },\n    \"inputs_schema\": {\n      \"type\": \"object\"\n\
+      \    },\n    \"outputs_schema\": {\n      \"type\": \"object\"\n    },\n   \
+      \ \"token_estimate\": 50,\n    \"maturity_score\": 0.5,\n    \"security_score\"\
+      : 0.5\n  },\n  \"relationships\": {\n    \"depends_on\": [\n      {\n      \
+      \  \"slug\": \"{{sanity_dependency_slug}}\",\n        \"version_constraint\"\
+      : \"latest\"\n      }\n    ],\n    \"extends\": [],\n    \"conflicts_with\"\
+      : [],\n    \"overlaps_with\": []\n  }\n}"
+runtime:
+  scripts:
+  - type: before-request
+    code: "const requestName = 'Publish Invalid Request';\nconst resetFlowStarts =\
+      \ new Set(['Healthz', 'Publish Invalid Request']);\n\nconst setDefault = (name,\
+      \ value) => {\n  const current = bru.getVar(name);\n  if (typeof current ===\
+      \ 'undefined' || current === null || current === '') {\n    bru.setVar(name,\
+      \ value);\n  }\n};\n\nsetDefault('sanity_version_1', '1.0.0');\nsetDefault('sanity_version_2',\
+      \ '2.0.0');\nsetDefault('negative_missing_version', '9.9.9');\nsetDefault('invalid_slug',\
+      \ 'invalid slug');\nsetDefault('invalid_version', 'not-a-semver');\nsetDefault('sanity_dependency_slug',\
+      \ '');\nsetDefault('sanity_extension_slug', '');\nsetDefault('sanity_overlap_slug',\
+      \ '');\nsetDefault('sanity_primary_slug', '');\nsetDefault('negative_invalid_slug',\
+      \ '');\nsetDefault('negative_duplicate_slug', '');\nsetDefault('negative_missing_slug',\
+      \ '');\nsetDefault('sanity_primary_content_digest', '');\n\nlet runId = bru.getVar('runId');\n\
+      \nif (resetFlowStarts.has(requestName) || !runId) {\n  runId = `${Date.now()}-${Math.floor(Math.random()\
+      \ * 100000)}`;\n  bru.setVar('runId', runId);\n  bru.setVar('sanity_dependency_slug',\
+      \ `postman.dep.${runId}`);\n  bru.setVar('sanity_extension_slug', `postman.ext.${runId}`);\n\
+      \  bru.setVar('sanity_overlap_slug', `postman.overlap.${runId}`);\n  bru.setVar('sanity_primary_slug',\
+      \ `postman.primary.${runId}`);\n  bru.setVar('negative_invalid_slug', `postman.invalid.${runId}`);\n\
+      \  bru.setVar('negative_duplicate_slug', `postman.duplicate.${runId}`);\n  bru.setVar('negative_missing_slug',\
+      \ `postman.missing.${runId}`);\n  bru.setVar('sanity_primary_content_digest',\
+      \ '');\n}"
+  - type: tests
+    code: "const json = res.getBody();\n\ntest('Status is 422', function () {\n  expect(res.getStatus()).to.equal(422);\n\
+      });\n\ntest('Invalid publish returns the normalized API error envelope', function\
+      \ () {\n  expect(json.error.code).to.eql('INVALID_REQUEST');\n  expect(json.error.details.errors).to.be.an('array').and.not.empty;\n\
+      });\n\nbru.runner.setNextRequest(res.getStatus() === 422 ? 'Seed Duplicate Skill\
+      \ Version' : null);"
+settings:
+  encodeUrl: true

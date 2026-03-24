@@ -1,0 +1,11 @@
+opencollection: 1.0.0
+info:
+  name: API
+  description: "Source-of-truth Postman collection for manual QA of the current Aptitude\
+    \ Skills API.\n\n  - Sanity: covers health, readiness, metrics, authenticated\
+    \ publish, lifecycle\n    updates, version listing, exact fetch, discovery, and\
+    \ resolution\n  - Negative: covers authenticated validation, duplicate, and exact-read\
+    \ path\n    errors\n\nNote: `/readyz` exposes a 503 branch only when the runtime\
+    \ is unhealthy, so the collection asserts the healthy `200 ready` path by default.\n\
+    All business endpoints require `Authorization: Bearer <token>`. The default token\
+    \ variables match the local development `AUTH_TOKENS_JSON` example from the README."
