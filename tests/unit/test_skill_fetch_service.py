@@ -89,7 +89,6 @@ def _stored_version(*, lifecycle_status: str = "published") -> StoredSkillVersio
         name="Python Lint",
         description="Linting skill",
         tags=("python", "lint"),
-        headers={"runtime": "python"},
         inputs_schema={"type": "object"},
         outputs_schema={"type": "object"},
         token_estimate=128,
@@ -149,6 +148,7 @@ def test_get_version_metadata_returns_immutable_detail() -> None:
     assert detail.slug == "python.lint"
     assert detail.version == "1.0.0"
     assert detail.content.checksum.digest == "content-digest"
+    assert not hasattr(detail.metadata, "headers")
     assert audit_recorder.events == ["skill.version_metadata_read"]
 
 
@@ -267,6 +267,35 @@ def test_list_versions_includes_archived_versions_for_admin_without_marking_defa
     )
 
     result = service.list_versions(caller=_caller("admin"), slug="python.lint")
+
+    assert [item.version for item in result.versions] == ["1.0.0", "2.0.0"]
+    assert result.versions[0].is_current_default is True
+    assert result.versions[1].is_current_default is False
+
+
+@pytest.mark.unit
+def test_list_versions_uses_version_as_final_tie_break_for_current_default() -> None:
+    published_at = datetime(2026, 3, 13, 9, 0, tzinfo=UTC)
+    service = SkillFetchService(
+        version_reader=FakeVersionReader(
+            versions=(
+                _stored_version_summary(
+                    "2.0.0",
+                    lifecycle_status="deprecated",
+                    published_at=published_at,
+                ),
+                _stored_version_summary(
+                    "1.0.0",
+                    lifecycle_status="deprecated",
+                    published_at=published_at,
+                ),
+            )
+        ),
+        audit_recorder=FakeAuditRecorder(),
+        governance_policy=_governance_policy(),
+    )
+
+    result = service.list_versions(caller=_caller("read"), slug="python.lint")
 
     assert [item.version for item in result.versions] == ["1.0.0", "2.0.0"]
     assert result.versions[0].is_current_default is True

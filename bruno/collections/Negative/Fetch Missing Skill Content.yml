@@ -1,0 +1,44 @@
+info:
+  name: Fetch Missing Skill Content
+  type: http
+  seq: 5000
+http:
+  method: GET
+  url: '{{baseUrl}}/skills/{{negative_missing_slug}}/{{negative_missing_version}}/content'
+  headers:
+  - name: Accept
+    value: text/markdown
+  - name: Authorization
+    value: Bearer {{readToken}}
+runtime:
+  scripts:
+  - type: before-request
+    code: "const requestName = 'Fetch Missing Skill Content';\nconst resetFlowStarts\
+      \ = new Set(['Healthz', 'Publish Invalid Request']);\n\nconst setDefault = (name,\
+      \ value) => {\n  const current = bru.getVar(name);\n  if (typeof current ===\
+      \ 'undefined' || current === null || current === '') {\n    bru.setVar(name,\
+      \ value);\n  }\n};\n\nsetDefault('sanity_version_1', '1.0.0');\nsetDefault('sanity_version_2',\
+      \ '2.0.0');\nsetDefault('negative_missing_version', '9.9.9');\nsetDefault('invalid_slug',\
+      \ 'invalid slug');\nsetDefault('invalid_version', 'not-a-semver');\nsetDefault('sanity_dependency_slug',\
+      \ '');\nsetDefault('sanity_extension_slug', '');\nsetDefault('sanity_overlap_slug',\
+      \ '');\nsetDefault('sanity_primary_slug', '');\nsetDefault('negative_invalid_slug',\
+      \ '');\nsetDefault('negative_duplicate_slug', '');\nsetDefault('negative_missing_slug',\
+      \ '');\nsetDefault('sanity_primary_content_digest', '');\n\nlet runId = bru.getVar('runId');\n\
+      \nif (resetFlowStarts.has(requestName) || !runId) {\n  runId = `${Date.now()}-${Math.floor(Math.random()\
+      \ * 100000)}`;\n  bru.setVar('runId', runId);\n  bru.setVar('sanity_dependency_slug',\
+      \ `postman.dep.${runId}`);\n  bru.setVar('sanity_extension_slug', `postman.ext.${runId}`);\n\
+      \  bru.setVar('sanity_overlap_slug', `postman.overlap.${runId}`);\n  bru.setVar('sanity_primary_slug',\
+      \ `postman.primary.${runId}`);\n  bru.setVar('negative_invalid_slug', `postman.invalid.${runId}`);\n\
+      \  bru.setVar('negative_duplicate_slug', `postman.duplicate.${runId}`);\n  bru.setVar('negative_missing_slug',\
+      \ `postman.missing.${runId}`);\n  bru.setVar('sanity_primary_content_digest',\
+      \ '');\n}"
+  - type: tests
+    code: "const json = res.getBody();\n\ntest('Status is 404', function () {\n  expect(res.getStatus()).to.equal(404);\n\
+      });\n\ntest('Unknown exact content coordinate returns the normalized API error\
+      \ envelope', function () {\n  expect(json.error.code).to.eql('SKILL_VERSION_NOT_FOUND');\n\
+      \  expect(json.error.details.slug).to.eql(bru.getVar('negative_missing_slug'));\n\
+      \  expect(json.error.details.version).to.eql(\n    bru.getVar('negative_missing_version'),\n\
+      \  );\n});\n\nbru.runner.setNextRequest(res.getStatus() === 404 ? 'Discover\
+      \ Without Name' : null);"
+settings:
+  encodeUrl: true

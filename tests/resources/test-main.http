@@ -47,7 +47,6 @@ Authorization: Bearer {{publisherToken}}
     "name": "Sanity Skill Stub",
     "description": "Manual test for the frozen public contract.",
     "tags": ["sanity", "stub", "manual"],
-    "headers": {"runtime": "python"},
     "inputs_schema": {"type": "object"},
     "outputs_schema": {"type": "object"},
     "token_estimate": 64,

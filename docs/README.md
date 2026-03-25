@@ -15,6 +15,7 @@ These files describe the live product and engineering baseline:
 
 - [README.md](../README.md): repo entrypoint, frozen route surface, quick start, and docs map
 - [docs/project/api-contract.md](project/api-contract.md): canonical public HTTP contract
+- [docs/project/publish-endpoint-schema.md](project/publish-endpoint-schema.md): field-by-field schema for the live publish request
 - [docs/project/scope.md](project/scope.md): server vs resolver/client boundary
 - [docs/prd.md](prd.md): current product requirements and success criteria
 - [docs/overview.md](overview.md): current product framing and end-to-end system shape
@@ -58,6 +59,7 @@ These docs provide background or future-looking ideas. Treat them as context, no
 
 - [docs/project/aptitude-project-high-level-design.md](project/aptitude-project-high-level-design.md)
 - [docs/drafts/publisher-server-resolver-architecture.md](drafts/publisher-server-resolver-architecture.md)
+- [docs/drafts/json-to-toon-migration.md](drafts/json-to-toon-migration.md)
 - [docs/drafts/semantic-search-architecture.md](drafts/semantic-search-architecture.md)
 - [docs/diagrams/aptitude-server-architecture.md](diagrams/aptitude-server-architecture.md)
 

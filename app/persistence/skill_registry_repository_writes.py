@@ -58,7 +58,6 @@ class SkillRegistryWriteMixin(SkillRegistryRepositoryBase):
                     name=record.metadata.name,
                     description=record.metadata.description,
                     tags=list(record.metadata.tags),
-                    headers=record.metadata.headers,
                     inputs_schema=record.metadata.inputs_schema,
                     outputs_schema=record.metadata.outputs_schema,
                     token_estimate=record.metadata.token_estimate,

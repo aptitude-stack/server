@@ -34,7 +34,6 @@ def to_skill_version_detail(*, stored: StoredSkillVersion) -> SkillVersionDetail
             name=stored.name,
             description=stored.description,
             tags=stored.tags,
-            headers=stored.headers,
             inputs_schema=stored.inputs_schema,
             outputs_schema=stored.outputs_schema,
             token_estimate=stored.token_estimate,

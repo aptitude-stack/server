@@ -17,12 +17,7 @@ from .models import (
     SkillVersionNotFoundError,
 )
 from .projections import to_skill_version_detail, to_skill_version_summary
-
-_LIST_LIFECYCLE_PRIORITY = {
-    "published": 0,
-    "deprecated": 1,
-    "archived": 2,
-}
+from .version_ordering import select_current_default_version, sort_versions_for_listing
 
 
 class SkillFetchService:
@@ -122,29 +117,13 @@ class SkillFetchService:
         if not visible_versions:
             raise SkillNotFoundError(slug=slug)
 
-        visible_versions = tuple(
-            sorted(
-                visible_versions,
-                key=lambda stored: (
-                    _LIST_LIFECYCLE_PRIORITY[stored.lifecycle_status],
-                    -stored.published_at.timestamp(),
-                    stored.version,
-                ),
-            )
-        )
-
-        current_default_version = next(
-            (
-                stored.version
-                for stored in visible_versions
-                if stored.lifecycle_status in ("published", "deprecated")
-            ),
-            None,
-        )
+        visible_versions = sort_versions_for_listing(visible_versions)
+        current_default = select_current_default_version(visible_versions)
         versions = tuple(
             to_skill_version_summary(
                 stored=stored,
-                is_current_default=stored.version == current_default_version,
+                is_current_default=current_default is not None
+                and stored.version == current_default.version,
             )
             for stored in visible_versions
         )

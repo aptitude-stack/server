@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from sqlalchemy import select, text, tuple_
+from sqlalchemy import select, tuple_
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.governance import LifecycleStatus, TrustTier
@@ -71,14 +71,6 @@ class SkillRegistryReadMixin(SkillRegistryRepositoryBase):
                 .join(Skill, Skill.id == SkillVersion.skill_fk)
                 .options(joinedload(SkillVersion.skill))
                 .where(Skill.slug == slug)
-                .order_by(
-                    text(
-                        "CASE skill_versions.lifecycle_status "
-                        "WHEN 'published' THEN 0 WHEN 'deprecated' THEN 1 ELSE 2 END"
-                    ),
-                    SkillVersion.published_at.desc(),
-                    SkillVersion.id.desc(),
-                )
             )
             rows = session.execute(statement).scalars().all()
             return tuple(

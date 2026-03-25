@@ -1,0 +1,108 @@
+info:
+  name: Publish Dependency Skill
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/skills/{{sanity_dependency_slug}}"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: Bearer {{publishToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "intent": "create_skill",
+        "version": "{{sanity_version_1}}",
+        "content": {
+          "raw_markdown": "# Postman Dependency Skill\n\nRun `{{runId}}` dependency version 1.\n"
+        },
+        "metadata": {
+          "name": "Postman Dependency Skill",
+          "description": "Dependency seed for relationship coverage",
+          "tags": ["postman", "sanity", "dependency"],
+          "inputs_schema": {
+            "type": "object"
+          },
+          "outputs_schema": {
+            "type": "object"
+          },
+          "token_estimate": 110,
+          "maturity_score": 0.8,
+          "security_score": 0.9
+        },
+        "relationships": {
+          "depends_on": [],
+          "extends": [],
+          "conflicts_with": [],
+          "overlaps_with": []
+        }
+      }
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const requestName = 'Publish Dependency Skill';
+        const resetFlowStarts = new Set(['Healthz', 'Publish Invalid Request']);
+
+        const setDefault = (name, value) => {
+          const current = bru.getVar(name);
+          if (typeof current === 'undefined' || current === null || current === '') {
+            bru.setVar(name, value);
+          }
+        };
+
+        setDefault('sanity_version_1', '1.0.0');
+        setDefault('sanity_version_2', '2.0.0');
+        setDefault('negative_missing_version', '9.9.9');
+        setDefault('invalid_slug', 'invalid slug');
+        setDefault('invalid_version', 'not-a-semver');
+        setDefault('sanity_dependency_slug', '');
+        setDefault('sanity_extension_slug', '');
+        setDefault('sanity_overlap_slug', '');
+        setDefault('sanity_primary_slug', '');
+        setDefault('negative_invalid_slug', '');
+        setDefault('negative_duplicate_slug', '');
+        setDefault('negative_missing_slug', '');
+        setDefault('sanity_primary_content_digest', '');
+
+        let runId = bru.getVar('runId');
+
+        if (resetFlowStarts.has(requestName) || !runId) {
+          runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+          bru.setVar('runId', runId);
+          bru.setVar('sanity_dependency_slug', `postman.dep.${runId}`);
+          bru.setVar('sanity_extension_slug', `postman.ext.${runId}`);
+          bru.setVar('sanity_overlap_slug', `postman.overlap.${runId}`);
+          bru.setVar('sanity_primary_slug', `postman.primary.${runId}`);
+          bru.setVar('negative_invalid_slug', `postman.invalid.${runId}`);
+          bru.setVar('negative_duplicate_slug', `postman.duplicate.${runId}`);
+          bru.setVar('negative_missing_slug', `postman.missing.${runId}`);
+          bru.setVar('sanity_primary_content_digest', '');
+        }
+    - type: tests
+      code: |-
+        const json = res.getBody();
+
+        test('Status is 201', function () {
+          expect(res.getStatus()).to.equal(201);
+        });
+
+        test('Dependency skill publish returns the created version', function () {
+          expect(json.slug).to.eql(bru.getVar('sanity_dependency_slug'));
+          expect(json.version).to.eql(bru.getVar('sanity_version_1'));
+        });
+
+        bru.runner.setNextRequest(res.getStatus() === 201 ? 'Publish Extension Skill' : null);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
