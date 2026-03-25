@@ -51,7 +51,6 @@ Top-level shape:
     "name": "Python Lint",
     "description": "Linting skill",
     "tags": ["python", "lint"],
-    "headers": {"runtime": "python"},
     "inputs_schema": {"type": "object"},
     "outputs_schema": {"type": "object"},
     "token_estimate": 128,
@@ -125,7 +124,6 @@ Notes:
 | `name` | Yes | `string` | none | Human-readable skill name. |
 | `description` | No | `string \| null` | `null` | Short summary. |
 | `tags` | No | `string[]` | `[]` | Trimmed, deduplicated, empty entries removed. |
-| `headers` | No | `object \| null` | `null` | Free-form JSON metadata. |
 | `inputs_schema` | No | `object \| null` | `null` | Structured input contract. |
 | `outputs_schema` | No | `object \| null` | `null` | Structured output contract. |
 | `token_estimate` | No | `integer \| null` | `null` | Must be `>= 0`. |

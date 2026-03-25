@@ -30,7 +30,6 @@ def to_create_command(slug: str, request: SkillVersionCreateRequest) -> CreateSk
             name=request.metadata.name,
             description=request.metadata.description,
             tags=tuple(request.metadata.tags),
-            headers=request.metadata.headers,
             inputs_schema=request.metadata.inputs_schema,
             outputs_schema=request.metadata.outputs_schema,
             token_estimate=request.metadata.token_estimate,

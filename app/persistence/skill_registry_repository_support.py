@@ -181,7 +181,6 @@ def to_stored_skill_version(entity: SkillVersion) -> StoredSkillVersion:
         name=entity.metadata_row.name,
         description=entity.metadata_row.description,
         tags=tuple(entity.metadata_row.tags),
-        headers=entity.metadata_row.headers,
         inputs_schema=entity.metadata_row.inputs_schema,
         outputs_schema=entity.metadata_row.outputs_schema,
         token_estimate=entity.metadata_row.token_estimate,

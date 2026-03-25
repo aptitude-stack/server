@@ -2,21 +2,9 @@ name: Dev
 variables:
   - name: baseUrl
     value: http://localhost:8000
-    enabled: true
-    secret: false
-    type: text
   - name: readToken
     value: reader-token
-    enabled: true
-    secret: false
-    type: text
   - name: publishToken
     value: publisher-token
-    enabled: true
-    secret: false
-    type: text
   - name: adminToken
     value: admin-token
-    enabled: true
-    secret: false
-    type: text

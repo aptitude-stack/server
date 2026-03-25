@@ -106,10 +106,6 @@ class SkillVersionMetadataRequest(BaseModel):
         default_factory=list,
         description="Free-form tags used for categorization and discovery.",
     )
-    headers: dict[str, Any] | None = Field(
-        default=None,
-        description="Flexible header-like attributes stored as JSON.",
-    )
     inputs_schema: dict[str, Any] | None = Field(
         default=None,
         description="Structured input contract stored as JSON.",

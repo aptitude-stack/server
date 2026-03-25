@@ -40,6 +40,7 @@ def test_publish_request_example_matches_request_contract() -> None:
     assert request.intent == "create_skill"
     assert request.version == "1.2.3"
     assert request.relationships.depends_on
+    assert "headers" not in request.metadata.model_dump(exclude_none=False)
 
 
 @pytest.mark.unit

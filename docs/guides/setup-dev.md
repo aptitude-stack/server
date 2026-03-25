@@ -158,7 +158,6 @@ curl \
       "name": "Local Observability",
       "description": "Dashboard exercise skill",
       "tags": ["ops"],
-      "headers": {"runtime": "python"},
       "inputs_schema": {"type": "object"},
       "outputs_schema": {"type": "object"},
       "token_estimate": 64,

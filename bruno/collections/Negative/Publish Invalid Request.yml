@@ -19,8 +19,7 @@ http:
       \ should fail validation.\\n\",\n    \"rendered_summary\": \"Invalid request\
       \ payload.\"\n  },\n  \"metadata\": {\n    \"name\": \"Invalid Postman Skill\"\
       ,\n    \"description\": \"Invalid publish payload for negative coverage\",\n\
-      \    \"tags\": [\"postman\", \"negative\"],\n    \"headers\": {\n      \"runtime\"\
-      : \"python\"\n    },\n    \"inputs_schema\": {\n      \"type\": \"object\"\n\
+      \    \"tags\": [\"postman\", \"negative\"],\n    \"inputs_schema\": {\n      \"type\": \"object\"\n\
       \    },\n    \"outputs_schema\": {\n      \"type\": \"object\"\n    },\n   \
       \ \"token_estimate\": 50,\n    \"maturity_score\": 0.5,\n    \"security_score\"\
       : 0.5\n  },\n  \"relationships\": {\n    \"depends_on\": [\n      {\n      \

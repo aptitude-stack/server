@@ -49,7 +49,6 @@ def test_build_search_document_source_combines_searchable_fields() -> None:
             name="  Python Hard Cut Source  ",
             description=" Hard cut discovery candidate ",
             tags=("Python", "hard-cut", "python"),
-            headers=None,
             inputs_schema=None,
             outputs_schema=None,
             token_estimate=None,

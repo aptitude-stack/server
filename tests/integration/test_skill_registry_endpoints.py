@@ -53,7 +53,6 @@ def _request(
             "name": name,
             "description": description,
             "tags": tags or ["python", "lint"],
-            "headers": {"runtime": "python"},
             "inputs_schema": {"type": "object"},
             "outputs_schema": {"type": "object"},
             "token_estimate": 128,
@@ -222,6 +221,7 @@ def test_publish_discovery_resolution_and_exact_fetch(
     assert "relationships" not in published
     assert "content_download_path" not in published
     assert "rendered_summary" not in published["content"]
+    assert "headers" not in published["metadata"]
 
     assert discovery.status_code == 200
     assert discovery.json()["candidates"] == [source_slug]
@@ -258,6 +258,7 @@ def test_publish_discovery_resolution_and_exact_fetch(
 
     assert metadata.status_code == 200
     metadata_body = metadata.json()
+    assert "headers" not in metadata_body["metadata"]
     assert metadata_body["slug"] == source_slug
     assert metadata_body["version"] == "2.0.0"
     assert "relationships" not in metadata_body
@@ -296,6 +297,26 @@ def test_publish_rejects_rendered_summary_field(
 
         response = client.post(
             "/skills/python.legacy-summary",
+            json=payload,
+            headers=_headers("publisher-token"),
+        )
+
+    assert response.status_code == 422, response.text
+
+
+@pytest.mark.integration
+def test_publish_rejects_metadata_headers_field(
+    monkeypatch: pytest.MonkeyPatch,
+    migrated_registry_database: str,
+) -> None:
+    monkeypatch.setenv("DATABASE_URL", migrated_registry_database)
+
+    with TestClient(create_app()) as client:
+        payload = _request("1.0.0")
+        payload["metadata"]["headers"] = {"runtime": "python"}
+
+        response = client.post(
+            "/skills/python.legacy-headers",
             json=payload,
             headers=_headers("publisher-token"),
         )

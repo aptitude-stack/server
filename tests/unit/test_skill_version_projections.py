@@ -21,7 +21,6 @@ def _stored_version() -> StoredSkillVersion:
         name="Python Lint",
         description="Checks Python code style.",
         tags=("python", "lint"),
-        headers={"x-owner": "aptitude"},
         inputs_schema={"type": "object"},
         outputs_schema={"type": "object"},
         token_estimate=128,
@@ -60,6 +59,7 @@ def test_to_skill_version_detail_returns_immutable_metadata_without_relationship
     assert detail.content.checksum.digest == "content-digest"
     assert not hasattr(detail.content, "rendered_summary")
     assert detail.metadata.name == "Python Lint"
+    assert not hasattr(detail.metadata, "headers")
     assert detail.lifecycle_status == "published"
     assert detail.published_at == datetime(2026, 3, 13, 9, 0, tzinfo=UTC)
     assert detail.provenance is not None

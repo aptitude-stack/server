@@ -42,7 +42,6 @@ class SkillMetadataInput:
     name: str
     description: str | None
     tags: tuple[str, ...]
-    headers: dict[str, Any] | None = None
     inputs_schema: dict[str, Any] | None = None
     outputs_schema: dict[str, Any] | None = None
     token_estimate: int | None = None
@@ -105,7 +104,6 @@ class SkillMetadata:
     name: str
     description: str | None
     tags: tuple[str, ...]
-    headers: dict[str, Any] | None
     inputs_schema: dict[str, Any] | None
     outputs_schema: dict[str, Any] | None
     token_estimate: int | None

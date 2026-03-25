@@ -67,7 +67,6 @@ def _metadata_response(metadata: SkillMetadata) -> SkillMetadataResponse:
         name=metadata.name,
         description=metadata.description,
         tags=list(metadata.tags),
-        headers=metadata.headers,
         inputs_schema=metadata.inputs_schema,
         outputs_schema=metadata.outputs_schema,
         token_estimate=metadata.token_estimate,

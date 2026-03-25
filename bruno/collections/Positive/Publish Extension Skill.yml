@@ -30,9 +30,6 @@ http:
             "sanity",
             "extension"
           ],
-          "headers": {
-            "runtime": "python"
-          },
           "inputs_schema": {
             "type": "object"
           },

@@ -26,9 +26,6 @@ http:
           "name": "Postman Overlap Skill",
           "description": "Overlap seed for relationship coverage",
           "tags": ["postman", "sanity", "overlap"],
-          "headers": {
-            "runtime": "python"
-          },
           "inputs_schema": {
             "type": "object"
           },

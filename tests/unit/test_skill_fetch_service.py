@@ -89,7 +89,6 @@ def _stored_version(*, lifecycle_status: str = "published") -> StoredSkillVersio
         name="Python Lint",
         description="Linting skill",
         tags=("python", "lint"),
-        headers={"runtime": "python"},
         inputs_schema={"type": "object"},
         outputs_schema={"type": "object"},
         token_estimate=128,
@@ -149,6 +148,7 @@ def test_get_version_metadata_returns_immutable_detail() -> None:
     assert detail.slug == "python.lint"
     assert detail.version == "1.0.0"
     assert detail.content.checksum.digest == "content-digest"
+    assert not hasattr(detail.metadata, "headers")
     assert audit_recorder.events == ["skill.version_metadata_read"]
 
 
