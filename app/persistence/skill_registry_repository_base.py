@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload, sessionmaker
 
 from app.core.ports import AuditEventRecord, CreateSkillVersionRecord
+from app.core.skills.version_ordering import select_current_default_version
 from app.persistence.models.audit_event import AuditEvent
 from app.persistence.models.skill import Skill
 from app.persistence.models.skill_content import SkillContent
@@ -66,22 +67,13 @@ class SkillRegistryRepositoryBase:
 
     @staticmethod
     def _select_current_default_version_id(*, session: Session, skill_id: int) -> int | None:
-        return session.execute(
-            select(SkillVersion.id)
-            .where(
-                SkillVersion.skill_fk == skill_id,
-                SkillVersion.lifecycle_status.in_(("published", "deprecated")),
-            )
-            .order_by(
-                text(
-                    "CASE skill_versions.lifecycle_status "
-                    "WHEN 'published' THEN 0 WHEN 'deprecated' THEN 1 ELSE 2 END"
-                ),
-                SkillVersion.published_at.desc(),
-                SkillVersion.id.desc(),
-            )
-            .limit(1)
-        ).scalar_one_or_none()
+        rows = session.execute(
+            select(SkillVersion).where(SkillVersion.skill_fk == skill_id)
+        ).scalars()
+        current_default = select_current_default_version(rows)
+        if current_default is None:
+            return None
+        return current_default.id
 
     @staticmethod
     def _get_version_entity(

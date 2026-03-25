@@ -23,6 +23,8 @@ changing the top-level server layering.
   and version-list summaries.
 - `exact_read.py`: shared exact-read policy and audit orchestration reused by
   fetch and resolution.
+- `version_ordering.py`: canonical ordering and current-default selection for
+  identity-level version lists and lifecycle recomputation.
 
 ## Boundaries
 

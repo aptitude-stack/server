@@ -552,6 +552,45 @@ def test_status_transitions_recompute_current_default(
 
 
 @pytest.mark.integration
+def test_version_list_and_status_update_use_same_default_ordering(
+    monkeypatch: pytest.MonkeyPatch,
+    migrated_registry_database: str,
+) -> None:
+    monkeypatch.setenv("DATABASE_URL", migrated_registry_database)
+    slug = f"python.default-ordering.{uuid4().hex}"
+
+    with TestClient(create_app()) as client:
+        _publish(client, slug, _request("1.0.0", intent="create_skill"))
+        _publish(client, slug, _request("2.0.0", intent="publish_version"))
+
+    engine = create_engine(migrated_registry_database)
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    UPDATE skill_versions
+                    SET published_at = TIMESTAMP WITH TIME ZONE '2026-03-10 08:30:00+00'
+                    WHERE skill_fk = (SELECT id FROM skills WHERE slug = :slug)
+                    """
+                ),
+                {"slug": slug},
+            )
+    finally:
+        engine.dispose()
+
+    with TestClient(create_app()) as client:
+        _update_status(client, slug=slug, version="1.0.0", status="deprecated")
+        status_update = _update_status(client, slug=slug, version="2.0.0", status="deprecated")
+        versions = client.get(f"/skills/{slug}", headers=_headers("reader-token"))
+
+    assert status_update["is_current_default"] is False
+    assert versions.status_code == 200
+    assert versions.json()["versions"][0]["version"] == "1.0.0"
+    assert versions.json()["versions"][0]["is_current_default"] is True
+
+
+@pytest.mark.integration
 def test_governance_applies_to_discovery_resolution_and_exact_fetch(
     monkeypatch: pytest.MonkeyPatch,
     migrated_registry_database: str,
