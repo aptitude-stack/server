@@ -8,7 +8,7 @@ script = ""
 [[actions]]
 name = "Run"
 icon = "run"
-command = "make observability-up"
+command = "make run"
 
 [[actions]]
 name = "Test"

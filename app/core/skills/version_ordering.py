@@ -6,22 +6,28 @@ from collections.abc import Iterable
 from datetime import datetime
 from typing import Protocol
 
-from app.core.governance import LifecycleStatus
-
-_VISIBLE_DEFAULT_LIFECYCLES: tuple[LifecycleStatus, ...] = ("published", "deprecated")
-_LIST_LIFECYCLE_PRIORITY: dict[LifecycleStatus, int] = {
-    "published": 0,
-    "deprecated": 1,
-    "archived": 2,
-}
+_VISIBLE_DEFAULT_LIFECYCLES = frozenset(("published", "deprecated"))
 
 
 class OrderedVersionLike(Protocol):
     """Minimal shape needed for version-list ordering and default selection."""
 
-    version: str
-    lifecycle_status: LifecycleStatus
-    published_at: datetime
+    @property
+    def version(self) -> str: ...
+
+    @property
+    def lifecycle_status(self) -> str: ...
+
+    @property
+    def published_at(self) -> datetime: ...
+
+
+def _lifecycle_priority(lifecycle_status: str) -> int:
+    if lifecycle_status == "published":
+        return 0
+    if lifecycle_status == "deprecated":
+        return 1
+    return 2
 
 
 def sort_versions_for_listing[TOrderedVersion: OrderedVersionLike](
@@ -32,7 +38,7 @@ def sort_versions_for_listing[TOrderedVersion: OrderedVersionLike](
         sorted(
             versions,
             key=lambda item: (
-                _LIST_LIFECYCLE_PRIORITY[item.lifecycle_status],
+                _lifecycle_priority(item.lifecycle_status),
                 -item.published_at.timestamp(),
                 item.version,
             ),
