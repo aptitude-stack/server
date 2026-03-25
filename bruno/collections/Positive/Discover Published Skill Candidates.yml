@@ -1,0 +1,88 @@
+info:
+  name: Discover Published Skill Candidates
+  type: http
+  seq: 13
+
+http:
+  method: POST
+  url: "{{baseUrl}}/discovery"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: Bearer {{readToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Postman Primary Skill",
+        "description": "Primary sanity skill for collection coverage",
+        "tags": ["postman", "sanity", "primary"]
+      }
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const requestName = 'Discover Published Skill Candidates';
+        const resetFlowStarts = new Set(['Healthz', 'Publish Invalid Request']);
+
+        const setDefault = (name, value) => {
+          const current = bru.getVar(name);
+          if (typeof current === 'undefined' || current === null || current === '') {
+            bru.setVar(name, value);
+          }
+        };
+
+        setDefault('sanity_version_1', '1.0.0');
+        setDefault('sanity_version_2', '2.0.0');
+        setDefault('negative_missing_version', '9.9.9');
+        setDefault('invalid_slug', 'invalid slug');
+        setDefault('invalid_version', 'not-a-semver');
+        setDefault('sanity_dependency_slug', '');
+        setDefault('sanity_extension_slug', '');
+        setDefault('sanity_overlap_slug', '');
+        setDefault('sanity_primary_slug', '');
+        setDefault('negative_invalid_slug', '');
+        setDefault('negative_duplicate_slug', '');
+        setDefault('negative_missing_slug', '');
+        setDefault('sanity_primary_content_digest', '');
+
+        let runId = bru.getVar('runId');
+
+        if (resetFlowStarts.has(requestName) || !runId) {
+          runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+          bru.setVar('runId', runId);
+          bru.setVar('sanity_dependency_slug', `postman.dep.${runId}`);
+          bru.setVar('sanity_extension_slug', `postman.ext.${runId}`);
+          bru.setVar('sanity_overlap_slug', `postman.overlap.${runId}`);
+          bru.setVar('sanity_primary_slug', `postman.primary.${runId}`);
+          bru.setVar('negative_invalid_slug', `postman.invalid.${runId}`);
+          bru.setVar('negative_duplicate_slug', `postman.duplicate.${runId}`);
+          bru.setVar('negative_missing_slug', `postman.missing.${runId}`);
+          bru.setVar('sanity_primary_content_digest', '');
+        }
+    - type: tests
+      code: |-
+        const json = res.getBody();
+
+        test('Status is 200', function () {
+          expect(res.getStatus()).to.equal(200);
+        });
+
+        test('Discovery returns the published primary slug candidate', function () {
+          expect(json.candidates).to.be.an('array').and.not.empty;
+          expect(json.candidates[0]).to.eql(bru.getVar('sanity_primary_slug'));
+        });
+
+        bru.runner.setNextRequest(
+          res.getStatus() === 200 ? 'Resolve Published Skill Dependencies' : null,
+        );
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

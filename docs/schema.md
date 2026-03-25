@@ -133,7 +133,8 @@ Immutability rule:
 - lifecycle and trust are version-scoped governance state
 - provenance is advisory publish-time metadata collected by the publisher client and validated/persisted by the server
 - any body or metadata change creates a new `skill_versions` row
-- default-version selection is derived from canonical version ordering when needed and is not stored on `skills`
+- default-version selection is derived when needed and is not stored on `skills`
+- the derived rule is `published` before `deprecated` before `archived`, then newer `published_at`, then lexicographically smaller `version`
 
 ### `skill_contents`
 Authoritative markdown body storage.

@@ -71,7 +71,6 @@ class SkillMetadataResponse(BaseModel):
     name: str
     description: str | None
     tags: list[str]
-    headers: dict[str, Any] | None = None
     inputs_schema: dict[str, Any] | None = None
     outputs_schema: dict[str, Any] | None = None
     token_estimate: int | None = None

@@ -28,9 +28,6 @@ body:
         "name": "Postman Extension Skill",
         "description": "Extension seed for relationship coverage",
         "tags": ["postman", "sanity", "extension"],
-        "headers": {
-          "runtime": "python"
-        },
         "inputs_schema": {
           "type": "object"
         },

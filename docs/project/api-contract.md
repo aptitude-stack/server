@@ -218,7 +218,9 @@ Rules:
 - Identity read only; it does not inline full metadata or markdown.
 - Missing slugs, or slugs with no versions visible to the caller, return `404`.
 - Read policy matches exact fetch visibility: `published` and `deprecated` are readable with `read`; `archived` is admin-only.
-- Ordering is current-default first, then remaining visible versions by canonical version ordering.
+- The server derives `is_current_default`; clients do not set it during publish.
+- Default/list ordering is deterministic: `published` before `deprecated` before `archived`, then newer `published_at`, then lexicographically smaller `version` as the final tie-break.
+- The first visible `published` or `deprecated` version is marked `is_current_default`.
 
 ### `GET /skills/{slug}/{version}`
 

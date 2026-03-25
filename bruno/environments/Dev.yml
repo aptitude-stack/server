@@ -1,0 +1,10 @@
+name: Dev
+variables:
+  - name: baseUrl
+    value: http://localhost:8000
+  - name: readToken
+    value: reader-token
+  - name: publishToken
+    value: publisher-token
+  - name: adminToken
+    value: admin-token

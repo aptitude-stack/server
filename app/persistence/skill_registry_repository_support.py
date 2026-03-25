@@ -181,7 +181,6 @@ def to_stored_skill_version(entity: SkillVersion) -> StoredSkillVersion:
         name=entity.metadata_row.name,
         description=entity.metadata_row.description,
         tags=tuple(entity.metadata_row.tags),
-        headers=entity.metadata_row.headers,
         inputs_schema=entity.metadata_row.inputs_schema,
         outputs_schema=entity.metadata_row.outputs_schema,
         token_estimate=entity.metadata_row.token_estimate,
@@ -260,11 +259,7 @@ def build_search_document_source(*, slug: str, metadata: MetadataRecordInput) ->
 def is_duplicate_skill_version_error(error: IntegrityError) -> bool:
     """Return whether an integrity error represents the immutable version key."""
     message = str(error.orig).lower()
-    return (
-        "uq_skill_versions_skill_fk_version" in message
-        or "unique constraint" in message
-        or "duplicate key value" in message
-    )
+    return "uq_skill_versions_skill_fk_version" in message
 
 
 def ensure_string_list(raw: object) -> list[str]:

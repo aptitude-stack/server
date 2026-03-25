@@ -29,9 +29,6 @@ body:
         "name": "Invalid Postman Skill",
         "description": "Invalid publish payload for negative coverage",
         "tags": ["postman", "negative"],
-        "headers": {
-          "runtime": "python"
-        },
         "inputs_schema": {
           "type": "object"
         },

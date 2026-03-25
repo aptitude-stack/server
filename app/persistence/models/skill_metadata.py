@@ -25,7 +25,6 @@ class SkillMetadata(Base):
         server_default=text("'{}'::text[]"),
         default=list,
     )
-    headers: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     inputs_schema: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     outputs_schema: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     token_estimate: Mapped[int | None] = mapped_column(Integer, nullable=True)

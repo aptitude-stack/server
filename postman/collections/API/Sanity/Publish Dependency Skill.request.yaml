@@ -33,9 +33,6 @@ body:
         "name": "Postman Dependency Skill",
         "description": "Dependency seed for relationship coverage",
         "tags": ["postman", "sanity", "dependency"],
-        "headers": {
-          "runtime": "python"
-        },
         "inputs_schema": {
           "type": "object"
         },

@@ -48,7 +48,6 @@ class MetadataRecordInput:
     name: str
     description: str | None
     tags: tuple[str, ...]
-    headers: dict[str, Any] | None
     inputs_schema: dict[str, Any] | None
     outputs_schema: dict[str, Any] | None
     token_estimate: int | None
@@ -115,7 +114,6 @@ class StoredSkillVersion:
     name: str
     description: str | None
     tags: tuple[str, ...]
-    headers: dict[str, Any] | None
     inputs_schema: dict[str, Any] | None
     outputs_schema: dict[str, Any] | None
     token_estimate: int | None

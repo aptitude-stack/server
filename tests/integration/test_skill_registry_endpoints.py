@@ -53,7 +53,6 @@ def _request(
             "name": name,
             "description": description,
             "tags": tags or ["python", "lint"],
-            "headers": {"runtime": "python"},
             "inputs_schema": {"type": "object"},
             "outputs_schema": {"type": "object"},
             "token_estimate": 128,
@@ -222,6 +221,7 @@ def test_publish_discovery_resolution_and_exact_fetch(
     assert "relationships" not in published
     assert "content_download_path" not in published
     assert "rendered_summary" not in published["content"]
+    assert "headers" not in published["metadata"]
 
     assert discovery.status_code == 200
     assert discovery.json()["candidates"] == [source_slug]
@@ -258,6 +258,7 @@ def test_publish_discovery_resolution_and_exact_fetch(
 
     assert metadata.status_code == 200
     metadata_body = metadata.json()
+    assert "headers" not in metadata_body["metadata"]
     assert metadata_body["slug"] == source_slug
     assert metadata_body["version"] == "2.0.0"
     assert "relationships" not in metadata_body
@@ -304,6 +305,26 @@ def test_publish_rejects_rendered_summary_field(
 
 
 @pytest.mark.integration
+def test_publish_rejects_metadata_headers_field(
+    monkeypatch: pytest.MonkeyPatch,
+    migrated_registry_database: str,
+) -> None:
+    monkeypatch.setenv("DATABASE_URL", migrated_registry_database)
+
+    with TestClient(create_app()) as client:
+        payload = _request("1.0.0")
+        payload["metadata"]["headers"] = {"runtime": "python"}
+
+        response = client.post(
+            "/skills/python.legacy-headers",
+            json=payload,
+            headers=_headers("publisher-token"),
+        )
+
+    assert response.status_code == 422, response.text
+
+
+@pytest.mark.integration
 def test_publish_reuses_digest_backed_content_rows_for_identical_content(
     monkeypatch: pytest.MonkeyPatch,
     migrated_registry_database: str,
@@ -336,6 +357,7 @@ def test_publish_reuses_digest_backed_content_rows_for_identical_content(
     counts = _query_storage_counts(migrated_registry_database, slug=slug)
 
     assert first["content"]["checksum"]["digest"] == second["content"]["checksum"]["digest"]
+    assert first["version_checksum"]["digest"] != second["version_checksum"]["digest"]
     assert first["provenance"] is None
     assert second["provenance"] is None
     assert counts == {
@@ -527,6 +549,45 @@ def test_status_transitions_recompute_current_default(
     assert archived["is_current_default"] is False
     assert invalid_transition.status_code == 403
     assert invalid_transition.json()["error"]["code"] == "POLICY_STATUS_TRANSITION_FORBIDDEN"
+
+
+@pytest.mark.integration
+def test_version_list_and_status_update_use_same_default_ordering(
+    monkeypatch: pytest.MonkeyPatch,
+    migrated_registry_database: str,
+) -> None:
+    monkeypatch.setenv("DATABASE_URL", migrated_registry_database)
+    slug = f"python.default-ordering.{uuid4().hex}"
+
+    with TestClient(create_app()) as client:
+        _publish(client, slug, _request("1.0.0", intent="create_skill"))
+        _publish(client, slug, _request("2.0.0", intent="publish_version"))
+
+    engine = create_engine(migrated_registry_database)
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    UPDATE skill_versions
+                    SET published_at = TIMESTAMP WITH TIME ZONE '2026-03-10 08:30:00+00'
+                    WHERE skill_fk = (SELECT id FROM skills WHERE slug = :slug)
+                    """
+                ),
+                {"slug": slug},
+            )
+    finally:
+        engine.dispose()
+
+    with TestClient(create_app()) as client:
+        _update_status(client, slug=slug, version="1.0.0", status="deprecated")
+        status_update = _update_status(client, slug=slug, version="2.0.0", status="deprecated")
+        versions = client.get(f"/skills/{slug}", headers=_headers("reader-token"))
+
+    assert status_update["is_current_default"] is False
+    assert versions.status_code == 200
+    assert versions.json()["versions"][0]["version"] == "1.0.0"
+    assert versions.json()["versions"][0]["is_current_default"] is True
 
 
 @pytest.mark.integration
