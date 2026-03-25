@@ -56,5 +56,4 @@ htmlcov/
 .uv-cache
 
 .tmp_migration.db
-
-deployment/
+/.codex/
