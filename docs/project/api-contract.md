@@ -84,12 +84,13 @@ Exact immutable coordinates use:
 }
 ```
 
-Publish and exact metadata fetch return the same immutable metadata envelope:
+Publish and exact metadata fetch return the same exact metadata response shape:
 
 ```json
 {
   "slug": "python.lint",
   "version": "1.2.3",
+  "install_count": 42,
   "version_checksum": {"algorithm": "sha256", "digest": "..."},
   "content": {
     "checksum": {"algorithm": "sha256", "digest": "..."},
@@ -120,6 +121,9 @@ Publish and exact metadata fetch return the same immutable metadata envelope:
 collect repository and publisher fields, while the server validates them,
 persists them immutably, and derives `trust_context` from server-owned policy.
 Discovery, resolution, and raw content reads do not depend on provenance.
+`install_count` is a mutable aggregate per skill slug and is not part of the
+immutable authored metadata block. The server increments it on successful exact
+content fetches and mirrors the same value into discovery ranking.
 
 ## Endpoint Summary
 
@@ -224,12 +228,12 @@ Rules:
 
 ### `GET /skills/{slug}/{version}`
 
-Returns the immutable metadata envelope for one exact coordinate.
+Returns the exact metadata response for one exact coordinate.
 
 Rules:
 
 - Exact read only, not search.
-- Returns the same metadata envelope shape as publish.
+- Returns the same metadata response shape as publish.
 - Missing coordinates return `404`.
 - Advisory provenance may be returned when it was captured at publish time.
 - Read policy matches exact resolution rules: `published` and `deprecated` are readable with `read`; `archived` is admin-only.

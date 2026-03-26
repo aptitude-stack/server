@@ -137,6 +137,7 @@ fetch still returns immutable markdown.
 | --- | --- | --- | --- |
 | Metadata | `skill_metadata` | Stores the structured, queryable skill description used for discovery and exact metadata reads. | `GET /skills/{slug}/{version}` |
 | Content | `skill_contents` | Stores the immutable markdown body, checksum digest, and size metadata for exact content fetches. | `GET /skills/{slug}/{version}/content` |
+| Skill Identity | `skills` | Stores the stable slug plus mutable aggregate install count shared across all versions of the skill. | `GET /skills/{slug}/{version}` and discovery ranking |
 | Version Binding | `skill_versions` | Binds one immutable version to one metadata row and one content row, plus lifecycle/trust/provenance state. | Publish + exact metadata reads |
 | Relationship Selectors | `skill_relationship_selectors` | Preserves authored `depends_on` and other selector families exactly as published. | `GET /resolution/{slug}/{version}` |
 | Search Projection | `skill_search_documents` | Derived discovery read model used for lexical search and deterministic candidate ordering. | `POST /discovery` |
@@ -148,7 +149,7 @@ fetch still returns immutable markdown.
 | `name` | `skill_metadata` | Human-readable display name returned in exact metadata reads and used in discovery matching. |
 | `description` | `skill_metadata` | Canonical short summary used for discovery and exact metadata responses. |
 | `tags` | `skill_metadata` | Primary categorical discovery filters. |
-| `headers` | `skill_metadata` | Flexible structured metadata that still belongs in the immutable metadata envelope. |
+| `install_count` | `skills` | Mutable aggregate install/download count per skill slug, returned on exact metadata reads and mirrored into discovery ranking. |
 | `inputs_schema` / `outputs_schema` | `skill_metadata` | Structured contract fragments for callers that need input/output shape information. |
 | `token_estimate` / `maturity_score` / `security_score` | `skill_metadata` | Numeric ranking/filtering inputs for discovery and downstream resolver scoring. |
 
