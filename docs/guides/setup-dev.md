@@ -112,7 +112,7 @@ This starts the API plus:
 - OTLP HTTP at `http://127.0.0.1:4318`
 - Grafana at `http://127.0.0.1:3000`
 
-Those services come from one `grafana/otel-lgtm` container. The observability profile keeps migrations explicit by running the one-shot `migrate` service before the app starts. Shut the stack down with:
+Those services come from one `grafana/otel-lgtm` container. The observability profile keeps migrations explicit by running the one-shot `migrate` service before the server starts. Shut the stack down with:
 
 ```bash
 make observability-down

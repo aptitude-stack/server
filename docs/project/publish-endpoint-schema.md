@@ -2,7 +2,7 @@
 
 Live publish contract for `aptitude-server`.
 
-This document describes the current request shape for the publish endpoint implemented by the server code. It is intentionally based on the live route and DTOs, not older historical route variants.
+This document describes the live publish request shape used by the repository's server code. It is based on the current route and DTOs, not older historical variants.
 
 Canonical sources:
 
@@ -283,4 +283,4 @@ If omitted, the server applies these defaults:
 - The `slug` belongs in the path, not in the JSON body.
 - The endpoint accepts JSON, not multipart form data.
 - `provenance` is optional structurally, but governance policy may make it required for some trust tiers.
-- Historical docs may mention older publish route shapes. This file describes the current live contract only.
+- Historical docs may mention older publish route shapes. This file describes the repo's current live contract only.
